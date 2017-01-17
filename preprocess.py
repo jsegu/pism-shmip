@@ -63,8 +63,38 @@ def make_boot_file_sqrt():
     make_boot_file('boot_sqrt.nc', x, y, b, h)
 
 
+def make_boot_file_valley(para=0.05):
+    """Make boot file for valley topography."""
+
+    # prepare coordinates
+    xmax = 6.0e3
+    ymax = 550.0
+    x = np.arange(0.0, xmax + 0.1, 20.0)
+    y = np.arange(-ymax, ymax, 20.0)
+    xx, yy = np.meshgrid(x, y)
+
+    # surface topography
+    s = 1.0 + 100.0*(xx/xmax+(xx+200.0)**0.25-200.0**0.25)
+    smax = s[0, -1]
+
+    # helper functions
+    f_func = para*xx + (smax-para*xmax) / xmax**2 * xx**2
+    f_benc = 0.05*xx + (smax-0.05*xmax) / xmax**2 * xx**2
+    g_func = 0.5e-6 * abs(yy)**3
+    h_func = (5 - 4.5*xx/xmax) * (s-f_func) / (s-f_benc+1e-12)
+
+    # basal topography and thickness
+    b = f_func + g_func * h_func
+    h = s - b
+    h[h<0.0] = 0.0
+
+    # make boot file
+    make_boot_file('boot_valley.nc', x, y, b, h)
+
+
 if __name__ == '__main__':
     """Main program, prepare all input files."""
 
     # prepare boot files
     make_boot_file_sqrt()
+    make_boot_file_valley()
