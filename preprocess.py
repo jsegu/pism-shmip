@@ -45,6 +45,44 @@ def make_boot_file(filename, x, y, b, h):
     hvar.standard_name = 'land_ice_thickness'
     hvar.units = 'm'
 
+    # set ice surface temp
+    var = nc.createVariable('ice_surface_temp', 'f4', ('y', 'x'))
+    var[:] = 0.0*b + 260.0
+    var.long_name = 'ice surface temperature for -surface given'
+    var.units = 'Kelvin'
+
+    # set surface mass balance
+    var = nc.createVariable('climatic_mass_balance', 'f4', ('y', 'x'))
+    var[:] = 0.0*b
+    var.standard_name = 'land_ice_surface_specific_mass_balance'
+    var.long_name = 'climatic mass balance for -surface given'
+    var.units = 'kg m-2 year-1'
+
+    # set basal melt rate
+    # FIXME: only valid for exp. A3, use bmelt file instead
+    var = nc.createVariable('bmelt', 'f4', ('y', 'x'))
+    var[:] = 0.0*b + 5.79e-09
+    var.standard_name = 'land_ice_basal_melt_rate'
+    var.long_name = 'basal melt rate'
+    var.units = 'm s-1'
+
+    # set mask for prescribed sliding velocity
+    var = nc.createVariable('bc_mask', 'f4', ('y', 'x'))
+    var[:] = 0.0*b + 1.0
+    var.long_name = 'mask prescribed sliding velocity'
+
+    # set x-component of prescribed sliding velocity
+    var = nc.createVariable('u_ssa_bc', 'f4', ('y', 'x'))
+    var[:] = 0.0*b - 1e-6
+    var.long_name = 'x-component of prescribed sliding velocity'
+    var.units = 'm s-1'
+
+    # set y-component of prescribed sliding velocity
+    var = nc.createVariable('v_ssa_bc', 'f4', ('y', 'x'))
+    var[:] = 0.0*b
+    var.long_name = 'y-component of prescribed sliding velocity'
+    var.units = 'm s-1'
+
     # close NetCDF file
     nc.close()
 
@@ -96,6 +134,5 @@ if __name__ == '__main__':
     """Main program, prepare all input files."""
 
     # prepare boot files
-    # FIXME: add prescribed sliding (u_ssa_bc, v_ssa_bc)
     make_boot_file_sqrt()
     make_boot_file_valley()
