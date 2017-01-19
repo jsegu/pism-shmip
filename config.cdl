@@ -31,6 +31,8 @@ variables:
         pism_overrides:hydrology_model = "distributed" ;
         pism_overrides:hydrology_tillwat_max = 0.0 ;
         pism_overrides:hydrology_tillwat_decay_rate = 3.16887646154128e-11 ;
+        pism_overrides:yield_stress_model = "constant" ;
+        pism_overrides:default_tauc = 1e6 ;
 
         // Turbulent flow
         pism_overrides:hydrology_thickness_power_in_flux = 1.25 ;  // alpha
