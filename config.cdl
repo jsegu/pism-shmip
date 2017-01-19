@@ -40,7 +40,7 @@ variables:
         pism_overrides:hydrology_hydraulic_conductivity = 0.005 ;
 
         // Regularization etc.
-        pism_overrides:hydrology_regularizing_porosity = 0.0 ;
+        pism_overrides:hydrology_regularizing_porosity = 1e-3 ;
         pism_overrides:hydrology_maximum_time_step_years = 1.0 ;
         pism_overrides:hydrology_null_strip_width = -1.0 ;
 
