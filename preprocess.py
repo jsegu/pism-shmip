@@ -96,5 +96,6 @@ if __name__ == '__main__':
     """Main program, prepare all input files."""
 
     # prepare boot files
+    # FIXME: add prescribed sliding (u_ssa_bc, v_ssa_bc)
     make_boot_file_sqrt()
     make_boot_file_valley()
