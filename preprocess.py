@@ -88,13 +88,21 @@ def make_boot_file(filename, x, y, b, h):
 
 
 def make_boot_file_sqrt():
-    """Make boot file for square root topography."""
+    """Make boot file for square root topography.
+
+    To apply SHMIP-compliant boundary conditions we make two changes:
+
+    * extend the domain by symetry in the x direction, and
+    * add one ice-free grid cell immediately before x=0.
+    """
 
     # prepare coordinates and topographies
-    x = np.arange(0.0, 100000.1, 500.0)
+    x = np.arange(-500.0, 200500.1, 500.0)
     y = np.arange(0.0, 20000.1, 500.0)
     xx, yy = np.meshgrid(x, y)
-    h = 1.0 + 6.0 * ((xx+5e3)**0.5-5e3**0.5)
+    xxsym = 100e3 - np.abs(xx-100e3)
+    h = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
+    h[(xx<0.0)+(200000.0<xx)] = 0.0
     b = 0.0 * h
 
     # make boot file
