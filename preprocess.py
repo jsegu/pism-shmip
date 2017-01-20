@@ -54,7 +54,7 @@ def make_boot_file(filename, x, y, b, h):
     # set surface mass balance
     var = nc.createVariable('climatic_mass_balance', 'f4', ('y', 'x'))
     var[:] = 0.0*b
-    var.standard_name = 'land_ice_surface_specific_mass_balance'
+    var.standard_name = 'land_ice_surface_specific_mass_balance_flux'
     var.long_name = 'climatic mass balance for -surface given'
     var.units = 'kg m-2 year-1'
 
