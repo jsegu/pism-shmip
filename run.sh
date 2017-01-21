@@ -27,10 +27,13 @@ done
 
 # default arguments
 exp=${exp:="a1"}
-years=${years:="1"}
+years=${years:="5"}
 
-# run name and extra variables
-run="exp$exp"
+# run name
+mkdir -p output
+run="output/$exp"
+
+# extra and ts variables
 extra_vars=bwat,bwatvel,bwp,bwprel,effbwp,wallmelt  # diagnostics
 #extra_vars+=,hydrobmelt,hydroinput,hydrovelbase_mag  # verification
 ts_vars=hydro_ice_free_land_loss,hydro_ice_free_land_loss_cumulative,
@@ -42,8 +45,8 @@ ncgen config.cdl -o config.nc
 # run PISM
 $PISM_DO $PISM_MPIDO $PISM_EXEC \
     -config_override config.nc -report_mass_accounting \
-    -i boot_sqrt.nc -bootstrap -hydrology_bmelt_file melt_$exp.nc\
+    -i input/boot_sqrt.nc -bootstrap -hydrology_bmelt_file input/melt_$exp.nc \
     -Mx 403 -My 41 -Mz 2 -Lz 2000 -y $years -o $run.nc -o_size small \
-    -extra_file $run-extra.nc -extra_times daily -extra_vars $extra_vars \
-    -ts_file $run-ts.nc -ts_times 3hours -ts_vars $ts_vars \
+    -extra_file ${run}_extra.nc -extra_times monthly -extra_vars $extra_vars \
+    -ts_file ${run}_ts.nc -ts_times daily -ts_vars $ts_vars \
     > $run.log 2> $run.err &

@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import os
 import numpy as np
 import netCDF4 as nc4
 
@@ -182,6 +183,11 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11):
 
 if __name__ == '__main__':
     """Main program, prepare all input files."""
+
+    # create inputs directory if absent
+    if not os.path.exists('input'):
+        os.makedirs('input')
+    os.chdir('input')
 
     # prepare boot files
     make_boot_file_sqrt()
