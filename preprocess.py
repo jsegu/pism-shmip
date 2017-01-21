@@ -4,11 +4,10 @@ import numpy as np
 import netCDF4 as nc4
 
 
-def make_boot_file(filename, x, y, b, h):
-    """Make boot file with x and y coords and topg and thk variables."""
+def init_pism_file(filename, x, y):
+    """Init basic NetCDF file with x and y coords."""
 
     # open NetCDF file
-    print "Preparing boot file %s ..." % filename
     nc = nc4.Dataset(filename, 'w')
 
     # define the dimensions
@@ -30,6 +29,18 @@ def make_boot_file(filename, x, y, b, h):
     yvar.long_name = 'y-coordinate in Cartesian system'
     yvar.standard_name = 'projection_y_coordinate'
     yvar.units = 'm'
+
+    # close NetCDF file
+    nc.close()
+
+
+def make_boot_file(filename, x, y, b, h):
+    """Make boot file with x and y coords and topg and thk variables."""
+
+    # init NetCDF file
+    print "Preparing boot file %s ..." % filename
+    init_pism_file(filename, x, y)
+    nc = nc4.Dataset(filename, 'a')
 
     # set bedrock surface elevation
     bvar = nc.createVariable('topg', 'f4', ('y', 'x'))
@@ -57,14 +68,6 @@ def make_boot_file(filename, x, y, b, h):
     var.standard_name = 'land_ice_surface_specific_mass_balance_flux'
     var.long_name = 'climatic mass balance for -surface given'
     var.units = 'kg m-2 year-1'
-
-    # set basal melt rate
-    # FIXME: only valid for exp. A3, use bmelt file instead
-    var = nc.createVariable('bmelt', 'f4', ('y', 'x'))
-    var[:] = 0.0*b + 5.79e-09
-    var.standard_name = 'land_ice_basal_melt_rate'
-    var.long_name = 'basal melt rate'
-    var.units = 'm s-1'
 
     # set mask for prescribed sliding velocity
     var = nc.createVariable('bc_mask', 'f4', ('y', 'x'))
@@ -138,9 +141,56 @@ def make_boot_file_valley(para=0.05):
     make_boot_file('boot_valley.nc', x, y, b, h)
 
 
+def make_melt_file(filename, x, y, m):
+    """Make basal melt input file with x and y coords and bmelt variable."""
+
+    # init NetCDF file
+    print "Preparing boot file %s ..." % filename
+    init_pism_file(filename, x, y)
+    nc = nc4.Dataset(filename, 'a')
+
+    # set basal melt rate
+    var = nc.createVariable('bmelt', 'f4', ('y', 'x'))
+    var[:] = m
+    var.standard_name = 'land_ice_basal_melt_rate'
+    var.long_name = 'basal melt rate'
+    var.units = 'm s-1'
+
+    # close NetCDF file
+    nc.close()
+
+
+def make_melt_file_sqrt(filename, bgmelt=7.93e-11):
+    """Make melt file for square root topography.
+
+    To apply SHMIP-compliant boundary conditions we make two changes:
+
+    * extend the domain by symetry in the x direction, and
+    * add one ice-free grid cell immediately before x=0.
+    """
+
+    # prepare coordinates and topographies
+    x = np.arange(-500.0, 200500.1, 500.0)
+    y = np.arange(0.0, 20000.1, 500.0)
+    xx, yy = np.meshgrid(x, y)
+    xxsym = 100e3 - np.abs(xx-100e3)
+    m = 0.0 * xx + bgmelt
+
+    # make melt file
+    make_melt_file(filename, x, y, m)
+
+
 if __name__ == '__main__':
     """Main program, prepare all input files."""
 
     # prepare boot files
     make_boot_file_sqrt()
     make_boot_file_valley()
+
+    # prepare melt files
+    make_melt_file_sqrt('melt_a1.nc', bgmelt=7.93e-11)
+    make_melt_file_sqrt('melt_a2.nc', bgmelt=1.59e-09)
+    make_melt_file_sqrt('melt_a3.nc', bgmelt=5.79e-09)
+    make_melt_file_sqrt('melt_a4.nc', bgmelt=2.5e-08)
+    make_melt_file_sqrt('melt_a5.nc', bgmelt=4.5e-08)
+    make_melt_file_sqrt('melt_a6.nc', bgmelt=5.79e-07)
