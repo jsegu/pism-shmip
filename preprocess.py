@@ -91,7 +91,7 @@ def make_boot_file(filename, x, y, b, h):
     nc.close()
 
 
-def make_boot_file_sqrt():
+def make_boot_file_sqrt(filename):
     """Make boot file for square root topography.
 
     To apply SHMIP-compliant boundary conditions we make two changes:
@@ -110,10 +110,10 @@ def make_boot_file_sqrt():
     b = 0.0 * h
 
     # make boot file
-    make_boot_file('boot_sqrt.nc', x, y, b, h)
+    make_boot_file(filename, x, y, b, h)
 
 
-def make_boot_file_valley(para=0.05):
+def make_boot_file_valley(filename, para=0.05):
     """Make boot file for valley topography."""
 
     # prepare coordinates
@@ -139,7 +139,7 @@ def make_boot_file_valley(para=0.05):
     h[h<0.0] = 0.0
 
     # make boot file
-    make_boot_file('boot_valley.nc', x, y, b, h)
+    make_boot_file(filename, x, y, b, h)
 
 
 def make_melt_file(filename, x, y, m):
@@ -187,16 +187,15 @@ if __name__ == '__main__':
     # create inputs directory if absent
     if not os.path.exists('input'):
         os.makedirs('input')
-    os.chdir('input')
 
     # prepare boot files
-    make_boot_file_sqrt()
-    make_boot_file_valley()
+    make_boot_file_sqrt('input/boot_sqrt.nc')
+    make_boot_file_valley('input/boot_valley.nc')
 
     # prepare melt files
-    make_melt_file_sqrt('melt_a1.nc', bgmelt=7.93e-11)
-    make_melt_file_sqrt('melt_a2.nc', bgmelt=1.59e-09)
-    make_melt_file_sqrt('melt_a3.nc', bgmelt=5.79e-09)
-    make_melt_file_sqrt('melt_a4.nc', bgmelt=2.5e-08)
-    make_melt_file_sqrt('melt_a5.nc', bgmelt=4.5e-08)
-    make_melt_file_sqrt('melt_a6.nc', bgmelt=5.79e-07)
+    make_melt_file_sqrt('input/melt_a1.nc', bgmelt=7.93e-11)
+    make_melt_file_sqrt('input/melt_a2.nc', bgmelt=1.59e-09)
+    make_melt_file_sqrt('input/melt_a3.nc', bgmelt=5.79e-09)
+    make_melt_file_sqrt('input/melt_a4.nc', bgmelt=2.5e-08)
+    make_melt_file_sqrt('input/melt_a5.nc', bgmelt=4.5e-08)
+    make_melt_file_sqrt('input/melt_a6.nc', bgmelt=5.79e-07)
