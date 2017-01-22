@@ -161,7 +161,7 @@ def make_melt_file(filename, x, y, m):
     nc.close()
 
 
-def make_melt_file_sqrt(filename, bgmelt=7.93e-11):
+def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
     """Make melt file for square root topography.
 
     To apply SHMIP-compliant boundary conditions we make two changes:
@@ -171,11 +171,22 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11):
     """
 
     # prepare coordinates and topographies
-    x = np.arange(-500.0, 200500.1, 500.0)
-    y = np.arange(0.0, 20000.1, 500.0)
+    dx = dy = 500.0
+    x = np.arange(-dx, 200e3 + dx + 0.1, dx)
+    y = np.arange(0.0, 20e3 + 0.1, dy)
     xx, yy = np.meshgrid(x, y)
     xxsym = 100e3 - np.abs(xx-100e3)
     m = 0.0 * xx + bgmelt
+
+    # apply specific melt rate at moulins locations
+    if moulins_file:
+        moulins = np.loadtxt(moulins_file, delimiter=',', ndmin=2)
+        for (km, xm, ym, qm) in moulins:
+            jm = np.abs(y - ym).argmin()
+            im = np.abs(x - xm).argmin()
+            imsym = np.abs(x + xm - 200e3).argmin()
+            m[jm, im] = qm/dx/dy
+            m[jm, imsym] = qm/dx/dy
 
     # make melt file
     make_melt_file(filename, x, y, m)
@@ -199,3 +210,8 @@ if __name__ == '__main__':
     make_melt_file_sqrt('input/melt_a4.nc', bgmelt=2.5e-08)
     make_melt_file_sqrt('input/melt_a5.nc', bgmelt=4.5e-08)
     make_melt_file_sqrt('input/melt_a6.nc', bgmelt=5.79e-07)
+    make_melt_file_sqrt('input/melt_b1.nc', moulins_file='moulins_b1.csv')
+    make_melt_file_sqrt('input/melt_b2.nc', moulins_file='moulins_b2.csv')
+    make_melt_file_sqrt('input/melt_b3.nc', moulins_file='moulins_b3.csv')
+    make_melt_file_sqrt('input/melt_b4.nc', moulins_file='moulins_b4.csv')
+    make_melt_file_sqrt('input/melt_b5.nc', moulins_file='moulins_b5.csv')
