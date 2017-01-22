@@ -49,4 +49,4 @@ $PISM_DO $PISM_MPIDO $PISM_EXEC \
     -Mx 403 -My 41 -Mz 2 -Lz 2000 -y $years -o $run.nc -o_size small \
     -extra_file ${run}_extra.nc -extra_times monthly -extra_vars $extra_vars \
     -ts_file ${run}_ts.nc -ts_times daily -ts_vars $ts_vars \
-    > $run.log 2> $run.err &
+    > $run.log 2> $run.err
