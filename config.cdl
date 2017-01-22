@@ -48,4 +48,8 @@ variables:
         pism_overrides:hydrology_use_const_bmelt = "no" ;
         pism_overrides:hydrology_const_bmelt = 3.168876461e-10 ;
 
+        // Limit time step duration
+        pism_overrides:maximum_time_step_years = 1e-3 ;
+        pism_overrides:ts_force_output_times = "yes" ;
+
 }
