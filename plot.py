@@ -7,13 +7,14 @@ import netCDF4 as nc4
 
 # use regular font for math text
 plt.rc('mathtext', default='regular')
+plt.rc('image', cmap='viridis')
 
 
-def plot_minmax(exp='a1'):
-    """Plot min, max and avg effective pressure and flux."""
+def plot_final(exp='a1'):
+    """Plot y-min, y-max and y-avg final effective pressure and flux."""
 
     # open extra file
-    print "Plotting experiment %s ..." % exp
+    print "Plotting experiment %s final stage..." % exp
     nc = nc4.Dataset('output/%s_extra.nc' % exp)
     x = nc.variables['x'][:]*1e-3
     p = nc.variables['effbwp'][-1,:,:]*1e-6
@@ -52,7 +53,36 @@ def plot_minmax(exp='a1'):
     ax2.grid()
 
     # save
-    plt.savefig('figures/%s' % exp)
+    plt.savefig('figures/final_%s' % exp)
+
+
+def plot_transient(exp='a1'):
+    """Plot time evolution of y-averaged effective pressure."""
+
+    # open extra file
+    print "Plotting experiment %s transient stage..." % exp
+    nc = nc4.Dataset('output/%s_extra.nc' % exp)
+    x = nc.variables['x'][:]*1e-3
+    t = nc.variables['time'][:]/(365.0*24*60*60)
+    p = nc.variables['effbwp'][:,:,:].mean(axis=2)*1e-6
+    nc.close()
+
+    # init figure
+    fig, ax = plt.subplots(1, 1)
+
+    # plot effective pressure
+    ax.set_title('Experiment %s ' % exp.upper())
+    im = ax.contourf(x, t, p)
+    ax.set_xlabel('Distance from ice margin (km)')
+    ax.set_ylabel('Time (a)')
+    ax.grid()
+
+    # add colorbar
+    cb = fig.colorbar(im)
+    cb.set_label('Effective pressure (MPa)')
+
+    # save
+    plt.savefig('figures/transient_%s' % exp)
 
 
 if __name__ == '__main__':
@@ -69,4 +99,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # plot given experiment
-    plot_minmax(args.exp)
+    plot_final(args.exp)
+    plot_transient(args.exp)
