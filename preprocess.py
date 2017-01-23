@@ -194,6 +194,22 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
     make_melt_file(filename, x, y, m)
 
 
+def make_melt_file_valley(filename, bgmelt=7.93e-11):
+    """Make melt file for valley topography."""
+
+    # prepare coordinates
+    xmax = 6000.0
+    ymax = 550.0
+    dx = dy = 20.0
+    x = np.arange(-dx, xmax + dx + 0.1, dx)
+    y = np.arange(-ymax, ymax + 0.1, dy)
+    xx, yy = np.meshgrid(x, y)
+    m = 0.0 * xx + bgmelt
+
+    # make melt file
+    make_melt_file(filename, x, y, m)
+
+
 if __name__ == '__main__':
     """Main program, prepare all input files."""
 
@@ -221,3 +237,4 @@ if __name__ == '__main__':
     make_melt_file_sqrt('input/melt_b3.nc', moulins_file='moulins_b3.csv')
     make_melt_file_sqrt('input/melt_b4.nc', moulins_file='moulins_b4.csv')
     make_melt_file_sqrt('input/melt_b5.nc', moulins_file='moulins_b5.csv')
+    make_melt_file_valley('input/melt_e1.nc', bgmelt=1.158e-6)
