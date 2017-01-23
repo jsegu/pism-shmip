@@ -5,7 +5,7 @@ variables:
         // Turn off ice dynamics
         pism_overrides:do_mass_conserve = "no" ;
         pism_overrides:do_energy = "no" ;
-        pism_overrides:stress_balance_model = "ssa+sia" ;
+        pism_overrides:stress_balance_model = "ssa" ;
         pism_overrides:ssa_dirichlet_bc = "yes" ;
 
         // Physical constants
