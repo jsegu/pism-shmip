@@ -203,7 +203,11 @@ if __name__ == '__main__':
 
     # prepare boot files
     make_boot_file_sqrt('input/boot_sqrt.nc')
-    make_boot_file_valley('input/boot_valley.nc')
+    make_boot_file_valley('input/boot_e1.nc', para=0.05)
+    make_boot_file_valley('input/boot_e2.nc', para=0.0)
+    make_boot_file_valley('input/boot_e3.nc', para=-0.1)
+    make_boot_file_valley('input/boot_e4.nc', para=-0.5)
+    make_boot_file_valley('input/boot_e5.nc', para=-0.7)
 
     # prepare melt files
     make_melt_file_sqrt('input/melt_a1.nc', bgmelt=7.93e-11)
