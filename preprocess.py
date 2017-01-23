@@ -101,8 +101,9 @@ def make_boot_file_sqrt(filename):
     """
 
     # prepare coordinates and topographies
-    x = np.arange(-500.0, 200500.1, 500.0)
-    y = np.arange(0.0, 20000.1, 500.0)
+    dx = dy = 500.0
+    x = np.arange(-dx, 200e3 + dx + 0.1, dx)
+    y = np.arange(0.0, 20e3 + 0.1, dy)
     xx, yy = np.meshgrid(x, y)
     xxsym = 100e3 - np.abs(xx-100e3)
     h = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
@@ -117,10 +118,11 @@ def make_boot_file_valley(filename, para=0.05):
     """Make boot file for valley topography."""
 
     # prepare coordinates
-    xmax = 6.0e3
+    xmax = 6000.0
     ymax = 550.0
-    x = np.arange(0.0, xmax + 0.1, 20.0)
-    y = np.arange(-ymax, ymax, 20.0)
+    dx = dy = 20.0
+    x = np.arange(-dx, xmax + dx + 0.1, dx)
+    y = np.arange(-ymax, ymax + 0.1, dy)
     xx, yy = np.meshgrid(x, y)
 
     # surface topography
@@ -170,7 +172,7 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
     * add one ice-free grid cell immediately before x=0.
     """
 
-    # prepare coordinates and topographies
+    # prepare coordinates
     dx = dy = 500.0
     x = np.arange(-dx, 200e3 + dx + 0.1, dx)
     y = np.arange(0.0, 20e3 + 0.1, dy)
