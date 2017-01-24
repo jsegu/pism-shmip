@@ -24,6 +24,12 @@ def plot_final(exp='a1'):
     q = -v*w/(365.0*24*60*60)*1e3
     nc.close()
 
+    # experiment specific settins
+    if exp[0] == 'e':
+        xmax = 6.0
+    else:
+        xmax = 100.0
+
     # compute min, max and mean
     pmin = p.min(axis=1)
     pmax = p.max(axis=1)
@@ -46,7 +52,7 @@ def plot_final(exp='a1'):
     # plot water velocity
     ax2.fill_between(x, qmin, qmax, edgecolor='none', alpha=0.25)
     ax2.plot(x, qavg)
-    ax2.set_xlim(0.0, 100.0)
+    ax2.set_xlim(0.0, xmax)
     ax2.set_ylim(0.0, ax2.get_ylim()[1])
     ax2.set_xlabel('Distance from ice margin (km)')
     ax2.set_ylabel('Water flux ($10^{-3}\,m^2\,s^{-1}$)')
