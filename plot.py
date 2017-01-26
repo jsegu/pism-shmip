@@ -13,6 +13,12 @@ plt.rc('image', cmap='viridis')
 def plot_final(exp='a1'):
     """Plot y-min, y-max and y-avg final effective pressure and flux."""
 
+    # experiment specific settins
+    if exp[0] == 'e':
+        xmax = 6.0
+    else:
+        xmax = 100.0
+
     # open extra file
     print "Plotting experiment %s final stage..." % exp
     nc = nc4.Dataset('output/%s_extra.nc' % exp)
@@ -23,12 +29,6 @@ def plot_final(exp='a1'):
     t = nc.variables['time'][-1]/(365.0*24*60*60)
     q = -v*w/(365.0*24*60*60)*1e3
     nc.close()
-
-    # experiment specific settins
-    if exp[0] == 'e':
-        xmax = 6.0
-    else:
-        xmax = 100.0
 
     # compute min, max and mean
     pmin = p.min(axis=1)
@@ -65,6 +65,12 @@ def plot_final(exp='a1'):
 def plot_transient(exp='a1'):
     """Plot time evolution of y-averaged effective pressure."""
 
+    # experiment specific settins
+    if exp[0] == 'e':
+        xmax = 6.0
+    else:
+        xmax = 100.0
+
     # open extra file
     print "Plotting experiment %s transient stage..." % exp
     nc = nc4.Dataset('output/%s_extra.nc' % exp)
@@ -81,6 +87,7 @@ def plot_transient(exp='a1'):
     im = ax.contourf(x, t, p)
     ax.set_xlabel('Distance from ice margin (km)')
     ax.set_ylabel('Time (a)')
+    ax.set_xlim(0.0, xmax)
     ax.grid()
 
     # add colorbar
