@@ -43,7 +43,7 @@ then
     boot_file="input/boot_$exp.nc"
     melt_file="input/melt_e1.nc"
     mx=303
-    my=55
+    my=56
 else
     boot_file="input/boot_sqrt.nc"
     melt_file="input/melt_$exp.nc"
