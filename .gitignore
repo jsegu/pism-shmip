@@ -9,3 +9,6 @@
 # Figures
 *.pdf
 *.png
+
+# Questions
+*.html
