@@ -62,6 +62,30 @@ def plot_final(exp='a1'):
     plt.savefig('figures/final_%s' % exp)
 
 
+def plot_timestamp(exp='a1'):
+    """Plot real time versus model time."""
+
+    # open extra file
+    print "Plotting experiment %s time stamps..." % exp
+    nc = nc4.Dataset('output/%s_extra.nc' % exp)
+    t = nc.variables['time'][:]/(365.0*24*60*60)
+    s = nc.variables['timestamp'][:]
+    nc.close()
+
+    # init figure
+    fig, ax = plt.subplots(1, 1)
+
+    # plot effective pressure
+    ax.set_title('Experiment %s, %.2f$\,h$' % (exp.upper(), s[-1]))
+    ax.plot(t, s)
+    ax.set_xlabel('Model time (a)')
+    ax.set_ylabel('Real time (h)')
+    ax.grid()
+
+    # save
+    plt.savefig('figures/timestamp_%s' % exp)
+
+
 def plot_transient(exp='a1'):
     """Plot time evolution of y-averaged effective pressure."""
 
@@ -113,4 +137,5 @@ if __name__ == '__main__':
 
     # plot given experiment
     plot_final(args.exp)
+    plot_timestamp(args.exp)
     plot_transient(args.exp)
