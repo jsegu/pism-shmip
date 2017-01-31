@@ -91,6 +91,20 @@ def postprocess(exp='a1'):
     ovar[:] = evar[:]
     copy_attributes(evar, ovar)
 
+    # copy water sheet thickness
+    evar = eds.variables['bwat']
+    ovar = ods.createVariable('h', evar.dtype, ('time', 'xdim'))
+    ovar[:] = evar[:]
+    copy_attributes(evar, ovar)
+
+    # compute water sheet discharge
+    u = eds.variables['bwatvel[0]'][:]
+    v = eds.variables['bwatvel[1]'][:]
+    ovar = ods.createVariable('q', evar.dtype, ('time', 'xdim'))
+    ovar[:] = (u**2+v**2)**0.5/(365.0*24*60*60)
+    ovar.long_name = 'water sheet discharge'
+    ovar.units = 'm2 s-1'
+
     # close datasets
     bds.close()
     eds.close()
