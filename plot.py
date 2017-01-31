@@ -24,10 +24,11 @@ def plot_final(exp='a1'):
     nc = nc4.Dataset('output/%s_extra.nc' % exp)
     x = nc.variables['x'][:]*1e-3
     p = nc.variables['effbwp'][-1,:,:]*1e-6
-    v = nc.variables['bwatvel[0]'][-1,:,:]
+    u = nc.variables['bwatvel[0]'][-1,:,:]
+    v = nc.variables['bwatvel[1]'][-1,:,:]
     w = nc.variables['bwat'][-1,:,:]
     t = nc.variables['time'][-1]/(365.0*24*60*60)
-    q = -v*w/(365.0*24*60*60)*1e3
+    q = w*(u**2+v**2)**0.5/(365.0*24*60*60)*1e3
     nc.close()
 
     # compute min, max and mean
