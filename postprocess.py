@@ -2,8 +2,10 @@
 # coding: utf-8
 
 import os
+import shutil
 import numpy as np
 import netCDF4 as nc4
+
 
 # parameters
 auth = 'jseg'
@@ -33,7 +35,7 @@ def postprocess(exp='a1'):
 
     # extra and output filenames
     efilename = 'output/%s_extra.nc' % exp
-    ofilename = '%s/%s_%s.nc' % (auth, exp.upper(), auth)
+    ofilename = 'processed/%s_%s.nc' % (exp.upper(), auth)
 
     # open datasets
     bds = nc4.Dataset(bfilename, 'r')
@@ -115,9 +117,12 @@ if __name__ == '__main__':
     """Main program, prepare all input files."""
 
     # create inputs directory if absent
-    if not os.path.exists(auth):
-        os.makedirs(auth)
+    if not os.path.exists('processed'):
+        os.makedirs('processed')
 
     # postprocess experiments completed
     for exp in exps:
         postprocess(exp)
+
+    # copy questionnaire
+    shutil.copyfile('questions.rst', 'processed/questions.rst')
