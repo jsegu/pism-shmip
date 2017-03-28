@@ -5,6 +5,7 @@ import os
 import shutil
 import numpy as np
 import netCDF4 as nc4
+import tarfile
 
 
 # parameters
@@ -141,6 +142,13 @@ if __name__ == '__main__':
     # postprocess experiments completed
     for exp in exps:
         postprocess(exp)
+
+    # make tar file
+    tarname = 'processed/shmip_%s.tar.gz' % auth
+    print "Preparing archive %s..." % tarname
+    with tarfile.open(tarname, "w:gz") as tar:
+        for exp in exps:
+            tar.add('processed/%s_%s.nc' % (exp.upper(), auth))
 
     # copy questionnaire
     shutil.copyfile('questions.rst', 'processed/questions.rst')
