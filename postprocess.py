@@ -17,9 +17,10 @@ exps = (['a%d' % i for i in range(1, 5)] +
 
 
 def copy_attributes(ivar, ovar):
-    """Copy all attributes from ivar to ovar."""
+    """Copy all attributes from ivar to ovar. Rename long_name to pism_name."""
     for attname in ivar.ncattrs():
-        setattr(ovar, attname, getattr(ivar, attname))
+        newname = 'pism_name' if attname == 'long_name' else attname
+        setattr(ovar, newname, getattr(ivar, attname))
 
 
 def postprocess(exp='a1'):
@@ -58,54 +59,71 @@ def postprocess(exp='a1'):
     ods.dimension = '2D'
     ods.channels_on_edges = 'no'
     ods.institution = '%s, %s' % (name, inst)
+    ods.references = 'http://pism-docs.org, http://shmip.bitbucket.io'
 
     # create dimensions
     ods.createDimension('dim', 2)  # number of spatial dimensions
-    ods.createDimension('xdim', len(x)*len(y))  # regular grid
-    ods.createDimension('xdims', len(x)*len(y))  # staggered grid
+    ods.createDimension('index1', len(x)*len(y))  # regular grid
+    ods.createDimension('index2', len(x)*len(y))  # staggered grid
     ods.createDimension('time', None)
 
-    # create new coordinate variables
-    ovar = ods.createVariable('xy', x.dtype, ('dim', 'xdim'))
+    # create SHMIP node (PISM cell center) coordinate variables
+    ovar = ods.createVariable('coords1', x.dtype, ('dim', 'index1'))
     ovar[:] = np.meshgrid(x, y)
-    ovar = ods.createVariable('xys', x.dtype, ('dim', 'xdims'))
+    ovar.long_name = 'node coordinates'
+    ovar.pism_name = 'cell center coordinate'
+    ovar.units = x.units
+
+    # create SHMIP cell (PISM staggered) coordinate variables
+    # (I deduced the sign of x and y shifts by looking at model output)
+    ovar = ods.createVariable('coords2', x.dtype, ('dim', 'index2'))
     ovar[:] = np.meshgrid(x+dx/2, y+dy/2)
-    ovar = ods.createVariable('Dxy', x.dtype, ('dim'))
-    ovar[:] = (dx, dy)
+    ovar.long_name = 'cell midpoint coordinates'
+    ovar.pism_name = 'staggered grid coordinate'
+    ovar.units = x.units
+
+    # copy time coordinate
     ovar = ods.createVariable('time', t.dtype, ('time'))
+    copy_attributes(t, ovar)
     ovar[:] = t[:]
+    ovar.long_name = 'time'
+    ovar.units = 's'
 
     # copy boot bedrock topography
     bvar = bds.variables['topg']
-    ovar = ods.createVariable('B', bvar.dtype, ('xdim'))
+    ovar = ods.createVariable('B', bvar.dtype, ('index1'))
     ovar[:] = bvar[:]
     copy_attributes(bvar, ovar)
+    ovar.long_name = 'bed elevation'
 
     # copy boot ice thickness
     bvar = bds.variables['thk']
-    ovar = ods.createVariable('H', bvar.dtype, ('xdim'))
+    ovar = ods.createVariable('H', bvar.dtype, ('index1'))
     ovar[:] = bvar[:]
     copy_attributes(bvar, ovar)
+    ovar.long_name = 'ice thickness'
 
     # copy effective pressure
     evar = eds.variables['effbwp']
-    ovar = ods.createVariable('N', evar.dtype, ('time', 'xdim'))
+    ovar = ods.createVariable('N', evar.dtype, ('time', 'index1'))
     ovar[:] = evar[:]
     copy_attributes(evar, ovar)
+    ovar.long_name = 'effective pressure'
 
     # copy water sheet thickness
     evar = eds.variables['bwat']
-    ovar = ods.createVariable('h', evar.dtype, ('time', 'xdim'))
+    ovar = ods.createVariable('h', evar.dtype, ('time', 'index1'))
     ovar[:] = evar[:]
     copy_attributes(evar, ovar)
+    ovar.long_name = 'water sheet thickness'
 
     # compute water sheet discharge
     u = eds.variables['bwatvel[0]'][:]
     v = eds.variables['bwatvel[1]'][:]
-    ovar = ods.createVariable('q', evar.dtype, ('time', 'xdim'))
+    ovar = ods.createVariable('q', evar.dtype, ('time', 'index2'))
     ovar[:] = (u**2+v**2)**0.5/(365.0*24*60*60)
     ovar.long_name = 'water sheet discharge'
-    ovar.units = 'm2 s-1'
+    ovar.units = 'm^2/s'
 
     # close datasets
     bds.close()
