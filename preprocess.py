@@ -5,15 +5,24 @@ import numpy as np
 import netCDF4 as nc4
 
 
-def init_pism_file(filename, x, y):
+def init_pism_file(filename, x, y, t):
     """Init basic NetCDF file with x and y coords."""
 
     # open NetCDF file
     nc = nc4.Dataset(filename, 'w')
 
     # define the dimensions
+    nc.createDimension('time', None)
     nc.createDimension('x', len(x))
     nc.createDimension('y', len(y))
+
+    # set time coordinate
+    tvar = nc.createVariable('t', 'f8', ('time',))
+    tvar[:] = t
+    tvar.axis = 'T'
+    tvar.long_name = 'time'
+    tvar.standard_name = 'time'
+    tvar.units = 'a'
 
     # set projection x coordinate
     xvar = nc.createVariable('x', 'f8', ('x',))
@@ -40,50 +49,50 @@ def make_boot_file(filename, x, y, b, h):
 
     # init NetCDF file
     print "Preparing boot file %s ..." % filename
-    init_pism_file(filename, x, y)
+    init_pism_file(filename, x, y, 0)
     nc = nc4.Dataset(filename, 'a')
 
     # set bedrock surface elevation
-    bvar = nc.createVariable('topg', 'f4', ('y', 'x'))
-    bvar[:] = b
+    bvar = nc.createVariable('topg', 'f4', ('time', 'y', 'x'))
+    bvar[0] = b
     bvar.long_name = 'bedrock surface elevation'
     bvar.standard_name = 'bedrock_altitude'
     bvar.units = 'm'
 
     # set land ice thickness
-    hvar = nc.createVariable('thk', 'f4', ('y', 'x'))
-    hvar[:] = h
+    hvar = nc.createVariable('thk', 'f4', ('time', 'y', 'x'))
+    hvar[0] = h
     hvar.long_name = 'land ice thickness'
     hvar.standard_name = 'land_ice_thickness'
     hvar.units = 'm'
 
     # set ice surface temp
-    var = nc.createVariable('ice_surface_temp', 'f4', ('y', 'x'))
-    var[:] = 0.0*b + 260.0
+    var = nc.createVariable('ice_surface_temp', 'f4', ('time', 'y', 'x'))
+    var[0] = 0.0*b + 260.0
     var.long_name = 'ice surface temperature for -surface given'
     var.units = 'Kelvin'
 
     # set surface mass balance
-    var = nc.createVariable('climatic_mass_balance', 'f4', ('y', 'x'))
-    var[:] = 0.0*b
+    var = nc.createVariable('climatic_mass_balance', 'f4', ('time', 'y', 'x'))
+    var[0] = 0.0*b
     var.standard_name = 'land_ice_surface_specific_mass_balance_flux'
     var.long_name = 'climatic mass balance for -surface given'
     var.units = 'kg m-2 year-1'
 
     # set mask for prescribed sliding velocity
-    var = nc.createVariable('bc_mask', 'f4', ('y', 'x'))
-    var[:] = 0.0*b + 1.0
+    var = nc.createVariable('bc_mask', 'f4', ('time', 'y', 'x'))
+    var[0] = 0.0*b + 1.0
     var.long_name = 'mask prescribed sliding velocity'
 
     # set x-component of prescribed sliding velocity
-    var = nc.createVariable('u_ssa_bc', 'f4', ('y', 'x'))
-    var[:] = 0.0*b - 1e-6
+    var = nc.createVariable('u_ssa_bc', 'f4', ('time', 'y', 'x'))
+    var[0] = 0.0*b - 1e-6
     var.long_name = 'x-component of prescribed sliding velocity'
     var.units = 'm s-1'
 
     # set y-component of prescribed sliding velocity
-    var = nc.createVariable('v_ssa_bc', 'f4', ('y', 'x'))
-    var[:] = 0.0*b
+    var = nc.createVariable('v_ssa_bc', 'f4', ('time', 'y', 'x'))
+    var[0] = 0.0*b
     var.long_name = 'y-component of prescribed sliding velocity'
     var.units = 'm s-1'
 
@@ -149,12 +158,12 @@ def make_melt_file(filename, x, y, m):
 
     # init NetCDF file
     print "Preparing boot file %s ..." % filename
-    init_pism_file(filename, x, y)
+    init_pism_file(filename, x, y, 0)
     nc = nc4.Dataset(filename, 'a')
 
     # set basal melt rate
-    var = nc.createVariable('bmelt', 'f4', ('y', 'x'))
-    var[:] = m
+    var = nc.createVariable('bmelt', 'f4', ('time', 'y', 'x'))
+    var[0] = m
     var.standard_name = 'land_ice_basal_melt_rate'
     var.long_name = 'basal melt rate'
     var.units = 'm s-1'
