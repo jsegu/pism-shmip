@@ -174,7 +174,7 @@ def make_melt_file(filename, x, y, t, m):
 
 
 def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
-                        ra=0.0, dt=None):
+                        moulins_relamp=0.0, temp_offset=None):
     """Make melt file for square root topography.
 
     To apply SHMIP-compliant boundary conditions we make two changes:
@@ -186,11 +186,11 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
     # time coordinate depend on options
     day = 24.0 * 60.0 * 60.0
     year = 365.0 * day
-    if ra != 0.0 and dt is not None:
+    if moulins_relamp != 0.0 and temp_offset is not None:
         raise NotImplementedError('Can not combine daily and seasonal cycles.')
-    elif ra != 0.0:
+    elif moulins_relamp != 0.0:
         t = np.arange(0.0, day, 300.0)
-    elif dt is not None:
+    elif temp_offset is not None:
         t = np.arange(0.0, year, day)
     else:
         t = np.array([0.0])
@@ -204,10 +204,10 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # add seasonal melt
-    if dt is not None:
+    if temp_offset is not None:
         xmax = 6000.0
         surf = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
-        temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + dt
+        temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
         lr = -0.0075 # 7.5 K km-1 temperature lapse rate
         ddf = 0.01/86400 # 10 mm K-1 day-1 degree day factor
         surftemp = [surf*lr] + temp[:, None, None]
@@ -220,7 +220,8 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
             jm = np.abs(y - ym).argmin()
             im = np.abs(x - xm).argmin()
             imsym = np.abs(x + xm - 200e3).argmin()
-            meltseries = np.maximum(0, qm*(1 - ra*np.sin(2*np.pi*t/day)))
+            meltseries = qm*(1 - moulins_relamp*np.sin(2*np.pi*t/day))
+            meltseries = np.maximum(0, meltseries)
             m[:, jm, im] += meltseries
             m[:, jm, imsym] += meltseries
 
@@ -272,12 +273,14 @@ if __name__ == '__main__':
     make_melt_file_sqrt('input/melt_b4.nc', moulins_file='moulins_b4.csv')
     make_melt_file_sqrt('input/melt_b5.nc', moulins_file='moulins_b5.csv')
     make_melt_file_valley('input/melt_e1.nc', bgmelt=1.158e-6)
-    make_melt_file_sqrt('input/melt_c1.nc', moulins_file='moulins_b5.csv', ra=0.25)
-    make_melt_file_sqrt('input/melt_c2.nc', moulins_file='moulins_b5.csv', ra=0.5)
-    make_melt_file_sqrt('input/melt_c3.nc', moulins_file='moulins_b5.csv', ra=1.0)
-    make_melt_file_sqrt('input/melt_c4.nc', moulins_file='moulins_b5.csv', ra=2.0)
-    make_melt_file_sqrt('input/melt_d1.nc', dt=-4.0)
-    make_melt_file_sqrt('input/melt_d2.nc', dt=-2.0)
-    make_melt_file_sqrt('input/melt_d3.nc', dt=0.0)
-    make_melt_file_sqrt('input/melt_d4.nc', dt=2.0)
-    make_melt_file_sqrt('input/melt_d5.nc', dt=4.0)
+    ckwargs = dict(moulins_file='moulins_b5.csv')
+    make_melt_file_sqrt('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
+    make_melt_file_sqrt('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
+    make_melt_file_sqrt('input/melt_c2.nc', moulins_relamp=0.5, **ckwargs)
+    make_melt_file_sqrt('input/melt_c3.nc', moulins_relamp=1.0, **ckwargs)
+    make_melt_file_sqrt('input/melt_c4.nc', moulins_relamp=2.0, **ckwargs)
+    make_melt_file_sqrt('input/melt_d1.nc', temp_offset=-4.0)
+    make_melt_file_sqrt('input/melt_d2.nc', temp_offset=-2.0)
+    make_melt_file_sqrt('input/melt_d3.nc', temp_offset=0.0)
+    make_melt_file_sqrt('input/melt_d4.nc', temp_offset=2.0)
+    make_melt_file_sqrt('input/melt_d5.nc', temp_offset=4.0)
