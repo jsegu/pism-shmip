@@ -17,12 +17,13 @@ def init_pism_file(filename, x, y, t):
     nc.createDimension('y', len(y))
 
     # set time coordinate
-    tvar = nc.createVariable('t', 'f8', ('time',))
+    tvar = nc.createVariable('time', 'f8', ('time',))
     tvar[:] = t
     tvar.axis = 'T'
     tvar.long_name = 'time'
     tvar.standard_name = 'time'
-    tvar.units = 'a'
+    tvar.calendar = '365_day'
+    tvar.units = 's'
 
     # set projection x coordinate
     xvar = nc.createVariable('x', 'f8', ('x',))
