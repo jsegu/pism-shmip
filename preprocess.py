@@ -50,8 +50,14 @@ def get_seasonal_melt(t, s, temp_offset=0.0, lapse_rate=-0.0075,
     return melt
 
 
-def get_topographies(mode='sqrt', para=0.05):
-    """Get spatial coordinates and surface topography."""
+def get_topographies(mode, para):
+    """Get spatial coordinates and surface topography.
+
+    To apply PISM-compliant boundary conditions we make two changes:
+
+    * extend the domain by symetry in the x direction, and
+    * add one ice-free grid cell immediately before x=0.
+    """
 
     # square root topography mode
     if mode == 'sqrt':
@@ -141,8 +147,11 @@ def init_pism_file(filename, x, y, t):
     nc.close()
 
 
-def make_boot_file(filename, x, y, b, h):
+def make_boot_file(filename, mode='sqrt', para=0.05):
     """Make boot file with x and y coords and topg and thk variables."""
+
+    # get coordinates and topographies
+    x, y, b, h, s = get_topographies(mode=mode, para=para)
 
     # init NetCDF file
     print "Preparing boot file %s ..." % filename
@@ -197,34 +206,24 @@ def make_boot_file(filename, x, y, b, h):
     nc.close()
 
 
-def make_boot_file_sqrt(filename):
-    """Make boot file for square root topography.
-
-    To apply SHMIP-compliant boundary conditions we make two changes:
-
-    * extend the domain by symetry in the x direction, and
-    * add one ice-free grid cell immediately before x=0.
-    """
-
-    # get coordinates and topographies
-    x, y, b, h, s = get_topographies(mode='sqrt')
-
-    # make boot file
-    make_boot_file(filename, x, y, b, h)
-
-
-def make_boot_file_valley(filename, para=0.05):
-    """Make boot file for valley topography."""
-
-    # get coordinates and topographies
-    x, y, b, h, s = get_topographies(mode='valley', para=para)
-
-    # make boot file
-    make_boot_file(filename, x, y, b, h)
-
-
-def make_melt_file(filename, x, y, t, m):
+def make_melt_file(filename, mode='sqrt', para=0.05, bgmelt=7.93e-11,
+                   moulins_file=None, moulins_relamp=0.0, temp_offset=None):
     """Make basal melt input file with x and y coords and bmelt variable."""
+
+    # get time coordinate depending on options
+    diurnal = (moulins_relamp != 0.0)
+    seasonal = (temp_offset is not None)
+    t = get_time_coord(diurnal=diurnal, seasonal=seasonal)
+
+    # get spatial coordinates and topographies
+    x, y, b, h, s = get_topographies(mode=mode, para=para)
+
+    # compute melt
+    m = np.ones((len(t), len(y), len(x))) * bgmelt
+    if seasonal:
+        m += get_seasonal_melt(t, s, temp_offset=temp_offset)
+    if moulins_file:
+        m += get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp)
 
     # init NetCDF file
     print "Preparing boot file %s ..." % filename
@@ -242,57 +241,6 @@ def make_melt_file(filename, x, y, t, m):
     nc.close()
 
 
-def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
-                        moulins_relamp=0.0, temp_offset=None):
-    """Make melt file for square root topography.
-
-    To apply SHMIP-compliant boundary conditions we make two changes:
-
-    * extend the domain by symetry in the x direction, and
-    * add one ice-free grid cell immediately before x=0.
-    """
-
-    # time coordinate depend on options
-    diurnal = (moulins_relamp != 0.0)
-    seasonal = (temp_offset is not None)
-    t = get_time_coord(diurnal=diurnal, seasonal=seasonal)
-
-    # prepare coordinates
-    x, y, b, h, s = get_topographies(mode='sqrt')
-    m = np.ones((len(t), len(y), len(x))) * bgmelt
-
-    # add seasonal melt
-    if seasonal:
-        m += get_seasonal_melt(t, s, temp_offset=temp_offset)
-
-    # add specific melt rate at moulins locations
-    if moulins_file is not None:
-        m += get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp)
-
-    # make melt file
-    make_melt_file(filename, x, y, t, m)
-
-
-def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None,
-                          para=0.05):
-    """Make melt file for valley topography."""
-
-    # time coordinate depend on options
-    seasonal = (temp_offset is not None)
-    t = get_time_coord(seasonal=seasonal)
-
-    # prepare coordinates
-    x, y, b, h, s = get_topographies(mode='valley', para=para)
-    m = np.ones((len(t), len(y), len(x))) * bgmelt
-
-    # add seasonal melt
-    if seasonal:
-        m += get_seasonal_melt(t, s, temp_offset=temp_offset)
-
-    # make melt file
-    make_melt_file(filename, x, y, t, m)
-
-
 if __name__ == '__main__':
     """Main program, prepare all input files."""
 
@@ -301,49 +249,49 @@ if __name__ == '__main__':
         os.makedirs('input')
 
     # prepare boot files
-    make_boot_file_sqrt('input/boot_sqrt.nc')
-    make_boot_file_valley('input/boot_e1.nc', para=0.05)
-    make_boot_file_valley('input/boot_e2.nc', para=0.0)
-    make_boot_file_valley('input/boot_e3.nc', para=-0.1)
-    make_boot_file_valley('input/boot_e4.nc', para=-0.5)
-    make_boot_file_valley('input/boot_e5.nc', para=-0.7)
+    make_boot_file('input/boot_sqrt.nc', mode='sqrt')
+    make_boot_file('input/boot_e1.nc', mode='valley', para=0.05)
+    make_boot_file('input/boot_e2.nc', mode='valley', para=0.0)
+    make_boot_file('input/boot_e3.nc', mode='valley', para=-0.1)
+    make_boot_file('input/boot_e4.nc', mode='valley', para=-0.5)
+    make_boot_file('input/boot_e5.nc', mode='valley', para=-0.7)
 
     # prepare melt files for exp. A1 to A6
-    make_melt_file_sqrt('input/melt_a1.nc', bgmelt=7.93e-11)
-    make_melt_file_sqrt('input/melt_a2.nc', bgmelt=1.59e-09)
-    make_melt_file_sqrt('input/melt_a3.nc', bgmelt=5.79e-09)
-    make_melt_file_sqrt('input/melt_a4.nc', bgmelt=2.5e-08)
-    make_melt_file_sqrt('input/melt_a5.nc', bgmelt=4.5e-08)
-    make_melt_file_sqrt('input/melt_a6.nc', bgmelt=5.79e-07)
+    make_melt_file('input/melt_a1.nc', mode='sqrt', bgmelt=7.93e-11)
+    make_melt_file('input/melt_a2.nc', mode='sqrt', bgmelt=1.59e-09)
+    make_melt_file('input/melt_a3.nc', mode='sqrt', bgmelt=5.79e-09)
+    make_melt_file('input/melt_a4.nc', mode='sqrt', bgmelt=2.5e-08)
+    make_melt_file('input/melt_a5.nc', mode='sqrt', bgmelt=4.5e-08)
+    make_melt_file('input/melt_a6.nc', mode='sqrt', bgmelt=5.79e-07)
 
     # prepare melt files for exp. B1 to B5
-    make_melt_file_sqrt('input/melt_b1.nc', moulins_file='moulins_b1.csv')
-    make_melt_file_sqrt('input/melt_b2.nc', moulins_file='moulins_b2.csv')
-    make_melt_file_sqrt('input/melt_b3.nc', moulins_file='moulins_b3.csv')
-    make_melt_file_sqrt('input/melt_b4.nc', moulins_file='moulins_b4.csv')
-    make_melt_file_sqrt('input/melt_b5.nc', moulins_file='moulins_b5.csv')
+    make_melt_file('input/melt_b1.nc', mode='sqrt', moulins_file='moulins_b1.csv')
+    make_melt_file('input/melt_b2.nc', mode='sqrt', moulins_file='moulins_b2.csv')
+    make_melt_file('input/melt_b3.nc', mode='sqrt', moulins_file='moulins_b3.csv')
+    make_melt_file('input/melt_b4.nc', mode='sqrt', moulins_file='moulins_b4.csv')
+    make_melt_file('input/melt_b5.nc', mode='sqrt', moulins_file='moulins_b5.csv')
 
     # prepare melt files for exp. C1 to C4
-    ckwargs = dict(moulins_file='moulins_b5.csv')
-    make_melt_file_sqrt('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
-    make_melt_file_sqrt('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
-    make_melt_file_sqrt('input/melt_c2.nc', moulins_relamp=0.5, **ckwargs)
-    make_melt_file_sqrt('input/melt_c3.nc', moulins_relamp=1.0, **ckwargs)
-    make_melt_file_sqrt('input/melt_c4.nc', moulins_relamp=2.0, **ckwargs)
+    ckwargs = dict(mode='sqrt', moulins_file='moulins_b5.csv')
+    make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
+    make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
+    make_melt_file('input/melt_c2.nc', moulins_relamp=0.5, **ckwargs)
+    make_melt_file('input/melt_c3.nc', moulins_relamp=1.0, **ckwargs)
+    make_melt_file('input/melt_c4.nc', moulins_relamp=2.0, **ckwargs)
 
     # prepare melt files for exp. D1 to D5
-    make_melt_file_sqrt('input/melt_d1.nc', temp_offset=-4.0)
-    make_melt_file_sqrt('input/melt_d2.nc', temp_offset=-2.0)
-    make_melt_file_sqrt('input/melt_d3.nc', temp_offset=0.0)
-    make_melt_file_sqrt('input/melt_d4.nc', temp_offset=2.0)
-    make_melt_file_sqrt('input/melt_d5.nc', temp_offset=4.0)
+    make_melt_file('input/melt_d1.nc', mode='sqrt', temp_offset=-4.0)
+    make_melt_file('input/melt_d2.nc', mode='sqrt', temp_offset=-2.0)
+    make_melt_file('input/melt_d3.nc', mode='sqrt', temp_offset=0.0)
+    make_melt_file('input/melt_d4.nc', mode='sqrt', temp_offset=2.0)
+    make_melt_file('input/melt_d5.nc', mode='sqrt', temp_offset=4.0)
 
     # prepare melt file for exp. E1 to E5
-    make_melt_file_valley('input/melt_e1.nc', bgmelt=1.158e-6)
+    make_melt_file('input/melt_e1.nc', mode='valley', bgmelt=1.158e-6)
 
     # prepare melt files for exp. F1 to F5
-    make_melt_file_valley('input/melt_f1.nc', temp_offset=-6.0)
-    make_melt_file_valley('input/melt_f2.nc', temp_offset=-3.0)
-    make_melt_file_valley('input/melt_f3.nc', temp_offset=0.0)
-    make_melt_file_valley('input/melt_f4.nc', temp_offset=3.0)
-    make_melt_file_valley('input/melt_f5.nc', temp_offset=6.0)
+    make_melt_file('input/melt_f1.nc', mode='valley', temp_offset=-6.0)
+    make_melt_file('input/melt_f2.nc', mode='valley', temp_offset=-3.0)
+    make_melt_file('input/melt_f3.nc', mode='valley', temp_offset=0.0)
+    make_melt_file('input/melt_f4.nc', mode='valley', temp_offset=3.0)
+    make_melt_file('input/melt_f5.nc', mode='valley', temp_offset=6.0)
