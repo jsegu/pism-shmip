@@ -173,7 +173,8 @@ def make_melt_file(filename, x, y, t, m):
     nc.close()
 
 
-def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None, ra=0.0):
+def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
+                        ra=0.0, dt=None):
     """Make melt file for square root topography.
 
     To apply SHMIP-compliant boundary conditions we make two changes:
@@ -185,8 +186,12 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None, ra=0.0):
     # time coordinate depend on options
     day = 24.0 * 60.0 * 60.0
     year = 365.0 * day
-    if ra != 0.0:
+    if ra != 0.0 and dt is not None:
+        raise NotImplementedError('Can not combine daily and seasonal cycles.')
+    elif ra != 0.0:
         t = np.arange(0.0, day, 300.0)
+    elif dt is not None:
+        t = np.arange(0.0, year, day)
     else:
         t = np.array([0.0])
 
@@ -198,8 +203,18 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None, ra=0.0):
     xxsym = 100e3 - np.abs(xx-100e3)
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
-    # apply specific melt rate at moulins locations
-    if moulins_file:
+    # add seasonal melt
+    if dt is not None:
+        xmax = 6000.0
+        surf = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
+        temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + dt
+        lr = -0.0075 # 7.5 K km-1 temperature lapse rate
+        ddf = 0.01/86400 # 10 mm K-1 day-1 degree day factor
+        surftemp = [surf*lr] + temp[:, None, None]
+        m += np.maximum(0, surftemp*ddf)
+
+    # add specific melt rate at moulins locations
+    if moulins_file is not None:
         moulins = np.loadtxt(moulins_file, delimiter=',', ndmin=2)
         for (km, xm, ym, qm) in moulins:
             jm = np.abs(y - ym).argmin()
@@ -261,3 +276,8 @@ if __name__ == '__main__':
     make_melt_file_sqrt('input/melt_c2.nc', moulins_file='moulins_b5.csv', ra=0.5)
     make_melt_file_sqrt('input/melt_c3.nc', moulins_file='moulins_b5.csv', ra=1.0)
     make_melt_file_sqrt('input/melt_c4.nc', moulins_file='moulins_b5.csv', ra=2.0)
+    make_melt_file_sqrt('input/melt_d1.nc', dt=-4.0)
+    make_melt_file_sqrt('input/melt_d2.nc', dt=-2.0)
+    make_melt_file_sqrt('input/melt_d3.nc', dt=0.0)
+    make_melt_file_sqrt('input/melt_d4.nc', dt=2.0)
+    make_melt_file_sqrt('input/melt_d5.nc', dt=4.0)
