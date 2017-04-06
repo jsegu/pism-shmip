@@ -196,8 +196,8 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
             jm = np.abs(y - ym).argmin()
             im = np.abs(x - xm).argmin()
             imsym = np.abs(x + xm - 200e3).argmin()
-            m[jm, im] = qm/dx/dy
-            m[jm, imsym] = qm/dx/dy
+            m[jm, im] = bgmelt + qm/dx/dy
+            m[jm, imsym] = bgmelt + qm/dx/dy
 
     # make melt file
     make_melt_file(filename, x, y, m)
