@@ -5,6 +5,56 @@ import numpy as np
 import netCDF4 as nc4
 
 
+def get_topos_sqrt():
+    """Get spatial coordinates and surface for square root topography."""
+
+    # prepare spatial coordinates
+    dx = dy = 500.0
+    x = np.arange(-dx, 200e3 + dx + 0.1, dx)
+    y = np.arange(0.0, 20e3 + 0.1, dy)
+    xx, yy = np.meshgrid(x, y)
+    xxsym = 100e3 - np.abs(xx-100e3)
+
+    # prepare topographies
+    s = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
+    s[(xx<0.0)+(200000.0<xx)] = 0.0
+    b = 0.0 * s
+    h = s
+
+    # return coordinates and surface topography
+    return x, y, b, h, s
+
+
+def get_topos_valley(para):
+    """Get spatial coordinates and surface for valley topography."""
+
+    # prepare spatial coordinates
+    xmax = 6000.0
+    ymax = 550.0
+    dx = dy = 20.0
+    x = np.arange(-dx, xmax + dx + 0.1, dx)
+    y = np.arange(-ymax, ymax + 0.1, dy)
+    xx, yy = np.meshgrid(x, y)
+
+    # prepare surface topography
+    s = 1.0 + 100.0*(xx/xmax+(xx+200.0)**0.25-200.0**0.25)
+    smax = s[0, -1]
+
+    # helper functions
+    f_func = para*xx + (smax-para*xmax) / xmax**2 * xx**2
+    f_benc = 0.05*xx + (smax-0.05*xmax) / xmax**2 * xx**2
+    g_func = 0.5e-6 * abs(yy)**3
+    h_func = (5 - 4.5*xx/xmax) * (s-f_func) / (s-f_benc+1e-12)
+
+    # basal topography and thickness
+    b = f_func + g_func * h_func
+    h = s - b
+    h[h<0.0] = 0.0
+
+    # return coordinates and surface topography
+    return x, y, b, h, s
+
+
 def init_pism_file(filename, x, y, t):
     """Init basic NetCDF file with x and y coords."""
 
@@ -110,15 +160,8 @@ def make_boot_file_sqrt(filename):
     * add one ice-free grid cell immediately before x=0.
     """
 
-    # prepare coordinates and topographies
-    dx = dy = 500.0
-    x = np.arange(-dx, 200e3 + dx + 0.1, dx)
-    y = np.arange(0.0, 20e3 + 0.1, dy)
-    xx, yy = np.meshgrid(x, y)
-    xxsym = 100e3 - np.abs(xx-100e3)
-    h = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
-    h[(xx<0.0)+(200000.0<xx)] = 0.0
-    b = 0.0 * h
+    # get coordinates and topographies
+    x, y, b, h, s = get_topos_sqrt()
 
     # make boot file
     make_boot_file(filename, x, y, b, h)
@@ -127,28 +170,8 @@ def make_boot_file_sqrt(filename):
 def make_boot_file_valley(filename, para=0.05):
     """Make boot file for valley topography."""
 
-    # prepare coordinates
-    xmax = 6000.0
-    ymax = 550.0
-    dx = dy = 20.0
-    x = np.arange(-dx, xmax + dx + 0.1, dx)
-    y = np.arange(-ymax, ymax + 0.1, dy)
-    xx, yy = np.meshgrid(x, y)
-
-    # surface topography
-    s = 1.0 + 100.0*(xx/xmax+(xx+200.0)**0.25-200.0**0.25)
-    smax = s[0, -1]
-
-    # helper functions
-    f_func = para*xx + (smax-para*xmax) / xmax**2 * xx**2
-    f_benc = 0.05*xx + (smax-0.05*xmax) / xmax**2 * xx**2
-    g_func = 0.5e-6 * abs(yy)**3
-    h_func = (5 - 4.5*xx/xmax) * (s-f_func) / (s-f_benc+1e-12)
-
-    # basal topography and thickness
-    b = f_func + g_func * h_func
-    h = s - b
-    h[h<0.0] = 0.0
+    # get coordinates and topographies
+    x, y, b, h, s = get_topos_valley(para)
 
     # make boot file
     make_boot_file(filename, x, y, b, h)
@@ -196,20 +219,15 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
         t = np.array([0.0])
 
     # prepare coordinates
-    dx = dy = 500.0
-    x = np.arange(-dx, 200e3 + dx + 0.1, dx)
-    y = np.arange(0.0, 20e3 + 0.1, dy)
-    xx, yy = np.meshgrid(x, y)
-    xxsym = 100e3 - np.abs(xx-100e3)
+    x, y, b, h, s = get_topos_sqrt()
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # add seasonal melt
     if temp_offset is not None:
-        surf = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
         temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
         lr = -0.0075 # 7.5 K km-1 temperature lapse rate
         ddf = 0.01/86400 # 10 mm K-1 day-1 degree day factor
-        surftemp = [surf*lr] + temp[:, None, None]
+        surftemp = [s*lr] + temp[:, None, None]
         m += np.maximum(0, surftemp*ddf)
 
     # add specific melt rate at moulins locations
@@ -228,7 +246,8 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
     make_melt_file(filename, x, y, t, m)
 
 
-def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None):
+def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None,
+                          para=0.05):
     """Make melt file for valley topography."""
 
     # time coordinate depend on options
@@ -240,21 +259,15 @@ def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None):
         t = np.array([0.0])
 
     # prepare coordinates
-    xmax = 6000.0
-    ymax = 550.0
-    dx = dy = 20.0
-    x = np.arange(-dx, xmax + dx + 0.1, dx)
-    y = np.arange(-ymax, ymax + 0.1, dy)
-    xx, yy = np.meshgrid(x, y)
+    x, y, b, h, s = get_topos_valley(para)
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # add seasonal melt
     if temp_offset is not None:
-        surf = 1.0 + 100.0*(xx/xmax+(xx+200.0)**0.25-200.0**0.25)
         temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
         lr = -0.0075 # 7.5 K km-1 temperature lapse rate
         ddf = 0.01/86400 # 10 mm K-1 day-1 degree day factor
-        surftemp = [surf*lr] + temp[:, None, None]
+        surftemp = [s*lr] + temp[:, None, None]
         m += np.maximum(0, surftemp*ddf)
     else:
         t = np.array([0.0])
