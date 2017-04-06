@@ -173,7 +173,7 @@ def make_melt_file(filename, x, y, t, m):
     nc.close()
 
 
-def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
+def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None, ra=0.0):
     """Make melt file for square root topography.
 
     To apply SHMIP-compliant boundary conditions we make two changes:
@@ -182,13 +182,21 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
     * add one ice-free grid cell immediately before x=0.
     """
 
+    # time coordinate depend on options
+    day = 24.0 * 60.0 * 60.0
+    year = 365.0 * day
+    if ra != 0.0:
+        t = np.arange(0.0, day, 300.0)
+    else:
+        t = np.array([0.0])
+
     # prepare coordinates
     dx = dy = 500.0
     x = np.arange(-dx, 200e3 + dx + 0.1, dx)
     y = np.arange(0.0, 20e3 + 0.1, dy)
     xx, yy = np.meshgrid(x, y)
     xxsym = 100e3 - np.abs(xx-100e3)
-    m = np.ones((1, len(y), len(x))) * bgmelt
+    m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # apply specific melt rate at moulins locations
     if moulins_file:
@@ -197,11 +205,12 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
             jm = np.abs(y - ym).argmin()
             im = np.abs(x - xm).argmin()
             imsym = np.abs(x + xm - 200e3).argmin()
-            m[:, jm, im] += qm/dx/dy
-            m[:, jm, imsym] += qm/dx/dy
+            meltseries = np.maximum(0, qm*(1 - ra*np.sin(2*np.pi*t/day)))
+            m[:, jm, im] += meltseries
+            m[:, jm, imsym] += meltseries
 
     # make melt file
-    make_melt_file(filename, x, y, 0, m)
+    make_melt_file(filename, x, y, t, m)
 
 
 def make_melt_file_valley(filename, bgmelt=7.93e-11):
@@ -248,3 +257,7 @@ if __name__ == '__main__':
     make_melt_file_sqrt('input/melt_b4.nc', moulins_file='moulins_b4.csv')
     make_melt_file_sqrt('input/melt_b5.nc', moulins_file='moulins_b5.csv')
     make_melt_file_valley('input/melt_e1.nc', bgmelt=1.158e-6)
+    make_melt_file_sqrt('input/melt_c1.nc', moulins_file='moulins_b5.csv', ra=0.25)
+    make_melt_file_sqrt('input/melt_c2.nc', moulins_file='moulins_b5.csv', ra=0.5)
+    make_melt_file_sqrt('input/melt_c3.nc', moulins_file='moulins_b5.csv', ra=1.0)
+    make_melt_file_sqrt('input/melt_c4.nc', moulins_file='moulins_b5.csv', ra=2.0)
