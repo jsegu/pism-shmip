@@ -46,6 +46,21 @@ def get_topos_sqrt():
     return x, y, b, h, s
 
 
+def get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp=0.0):
+    """Compute distributed moulins input from pointwise csv file."""
+    melt = np.zeros((len(t), len(y), len(x)))
+    moulins = np.loadtxt(moulins_file, delimiter=',', ndmin=2)
+    for (km, xm, ym, qm) in moulins:
+        jm = np.abs(y - ym).argmin()
+        im = np.abs(x - xm).argmin()
+        imsym = np.abs(x + xm - 200e3).argmin()
+        meltseries = qm*(1 - moulins_relamp*np.sin(2*np.pi*t/day))
+        meltseries = np.maximum(0, meltseries)
+        melt[:, jm, im] += meltseries
+        melt[:, jm, imsym] += meltseries
+    return melt
+
+
 def get_seasonal_melt(t, s, temp_offset=0.0, lapse_rate=-0.0075,
                       ddf=0.01/86400):
     """Compute seasonal melt using a simple degree-day model."""
@@ -251,15 +266,7 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
 
     # add specific melt rate at moulins locations
     if moulins_file is not None:
-        moulins = np.loadtxt(moulins_file, delimiter=',', ndmin=2)
-        for (km, xm, ym, qm) in moulins:
-            jm = np.abs(y - ym).argmin()
-            im = np.abs(x - xm).argmin()
-            imsym = np.abs(x + xm - 200e3).argmin()
-            meltseries = qm*(1 - moulins_relamp*np.sin(2*np.pi*t/day))
-            meltseries = np.maximum(0, meltseries)
-            m[:, jm, im] += meltseries
-            m[:, jm, imsym] += meltseries
+        m += get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp)
 
     # make melt file
     make_melt_file(filename, x, y, t, m)
