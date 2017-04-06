@@ -4,6 +4,27 @@ import os
 import numpy as np
 import netCDF4 as nc4
 
+# day and year in seconds
+day = 24.0 * 60.0 * 60.0
+year = 365.0 * day
+
+
+def get_time_coord(diurnal=False, seasonal=False):
+    """Built time coordinate as constant, diurnal or seasonal."""
+
+    # build time array
+    if diurnal and seasonal:
+        raise NotImplementedError('Can not combine diurnal and seasonal cycles.')
+    elif diurnal:
+        t = np.arange(0.0, day, 300.0)
+    elif seasonal:
+        t = np.arange(0.0, year, day)
+    else:
+        t = np.array([0.0])
+
+    # return time array
+    return t
+
 
 def get_topos_sqrt():
     """Get spatial coordinates and surface for square root topography."""
@@ -207,16 +228,9 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
     """
 
     # time coordinate depend on options
-    day = 24.0 * 60.0 * 60.0
-    year = 365.0 * day
-    if moulins_relamp != 0.0 and temp_offset is not None:
-        raise NotImplementedError('Can not combine daily and seasonal cycles.')
-    elif moulins_relamp != 0.0:
-        t = np.arange(0.0, day, 300.0)
-    elif temp_offset is not None:
-        t = np.arange(0.0, year, day)
-    else:
-        t = np.array([0.0])
+    diurnal = (moulins_relamp != 0.0)
+    seasonal = (temp_offset is not None)
+    t = get_time_coord(diurnal=diurnal, seasonal=seasonal)
 
     # prepare coordinates
     x, y, b, h, s = get_topos_sqrt()
@@ -251,12 +265,8 @@ def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None,
     """Make melt file for valley topography."""
 
     # time coordinate depend on options
-    day = 24.0 * 60.0 * 60.0
-    year = 365.0 * day
-    if temp_offset is not None:
-        t = np.arange(0.0, year, day)
-    else:
-        t = np.array([0.0])
+    seasonal = (temp_offset is not None)
+    t = get_time_coord(seasonal=seasonal)
 
     # prepare coordinates
     x, y, b, h, s = get_topos_valley(para)
