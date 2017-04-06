@@ -14,7 +14,7 @@ def get_time_coord(diurnal=False, seasonal=False):
 
     # build time array
     if diurnal and seasonal:
-        raise NotImplementedError('Can not combine diurnal and seasonal cycles.')
+        raise ValueError('Can not combine diurnal and seasonal cycles.')
     elif diurnal:
         t = np.arange(0.0, day, 300.0)
     elif seasonal:
@@ -28,8 +28,12 @@ def get_time_coord(diurnal=False, seasonal=False):
 
 def get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp=0.0):
     """Compute distributed moulins input from pointwise csv file."""
+
+    # init melt and load moulins file data
     melt = np.zeros((len(t), len(y), len(x)))
     moulins = np.loadtxt(moulins_file, delimiter=',', ndmin=2)
+
+    # apply distributed melt rates on nearest grid cells
     for (km, xm, ym, qm) in moulins:
         jm = np.abs(y - ym).argmin()
         im = np.abs(x - xm).argmin()
@@ -38,15 +42,25 @@ def get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp=0.0):
         meltseries = np.maximum(0, meltseries)
         melt[:, jm, im] += meltseries
         melt[:, jm, imsym] += meltseries
+
+    # return spatio-temporal melt array
     return melt
 
 
 def get_seasonal_melt(t, s, temp_offset=0.0, lapse_rate=-0.0075,
                       ddf=0.01/86400):
     """Compute seasonal melt using a simple degree-day model."""
+
+    # compute seasonal cycle
     temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
+
+    # apply temperature lapse rate
     temp = [s*lapse_rate] + temp[:, None, None]
+
+    # compute melt by simple degree-day model
     melt = np.maximum(0, temp*ddf)
+
+    # return spatio-temporal melt array
     return melt
 
 
@@ -73,7 +87,7 @@ def get_topographies(mode, para):
 
         # prepare topographies
         s = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
-        s[(xx<0.0)+(xmax<xx)] = 0.0
+        s[(xx < 0.0)+(xmax < xx)] = 0.0
         b = 0.0 * s
         h = s
 
@@ -101,7 +115,7 @@ def get_topographies(mode, para):
         # basal topography and thickness
         b = f_func + g_func * h_func
         h = s - b
-        h[h<0.0] = 0.0
+        h[h < 0.0] = 0.0
 
     # return coordinates and surface topography
     return x, y, b, h, s
@@ -265,19 +279,20 @@ if __name__ == '__main__':
     make_melt_file('input/melt_a6.nc', mode='sqrt', bgmelt=5.79e-07)
 
     # prepare melt files for exp. B1 to B5
-    make_melt_file('input/melt_b1.nc', mode='sqrt', moulins_file='moulins_b1.csv')
-    make_melt_file('input/melt_b2.nc', mode='sqrt', moulins_file='moulins_b2.csv')
-    make_melt_file('input/melt_b3.nc', mode='sqrt', moulins_file='moulins_b3.csv')
-    make_melt_file('input/melt_b4.nc', mode='sqrt', moulins_file='moulins_b4.csv')
-    make_melt_file('input/melt_b5.nc', mode='sqrt', moulins_file='moulins_b5.csv')
+    kwa = dict(mode='sqrt')
+    make_melt_file('input/melt_b1.nc', moulins_file='moulins_b1.csv', **kwa)
+    make_melt_file('input/melt_b2.nc', moulins_file='moulins_b2.csv', **kwa)
+    make_melt_file('input/melt_b3.nc', moulins_file='moulins_b3.csv', **kwa)
+    make_melt_file('input/melt_b4.nc', moulins_file='moulins_b4.csv', **kwa)
+    make_melt_file('input/melt_b5.nc', moulins_file='moulins_b5.csv', **kwa)
 
     # prepare melt files for exp. C1 to C4
-    ckwargs = dict(mode='sqrt', moulins_file='moulins_b5.csv')
-    make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
-    make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
-    make_melt_file('input/melt_c2.nc', moulins_relamp=0.5, **ckwargs)
-    make_melt_file('input/melt_c3.nc', moulins_relamp=1.0, **ckwargs)
-    make_melt_file('input/melt_c4.nc', moulins_relamp=2.0, **ckwargs)
+    kwa = dict(mode='sqrt', moulins_file='moulins_b5.csv')
+    make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **kwa)
+    make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **kwa)
+    make_melt_file('input/melt_c2.nc', moulins_relamp=0.5, **kwa)
+    make_melt_file('input/melt_c3.nc', moulins_relamp=1.0, **kwa)
+    make_melt_file('input/melt_c4.nc', moulins_relamp=2.0, **kwa)
 
     # prepare melt files for exp. D1 to D5
     make_melt_file('input/melt_d1.nc', mode='sqrt', temp_offset=-4.0)

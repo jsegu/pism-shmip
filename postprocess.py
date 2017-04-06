@@ -31,9 +31,9 @@ def postprocess(exp='a1'):
 
     # boot filename
     if exp[0] == 'e':
-        bfilename='input/boot_%s.nc' % exp
+        bfilename = 'input/boot_%s.nc' % exp
     else:
-        bfilename='input/boot_sqrt.nc'
+        bfilename = 'input/boot_sqrt.nc'
 
     # extra and output filenames
     efilename = 'output/%s_extra.nc' % exp
