@@ -46,6 +46,15 @@ def get_topos_sqrt():
     return x, y, b, h, s
 
 
+def get_seasonal_melt(t, s, temp_offset=0.0, lapse_rate=-0.0075,
+                      ddf=0.01/86400):
+    """Compute seasonal melt using a simple degree-day model."""
+    temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
+    temp = [s*lapse_rate] + temp[:, None, None]
+    melt = np.maximum(0, temp*ddf)
+    return melt
+
+
 def get_topos_valley(para):
     """Get spatial coordinates and surface for valley topography."""
 
@@ -237,12 +246,8 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # add seasonal melt
-    if temp_offset is not None:
-        temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
-        lr = -0.0075 # 7.5 K km-1 temperature lapse rate
-        ddf = 0.01/86400 # 10 mm K-1 day-1 degree day factor
-        surftemp = [s*lr] + temp[:, None, None]
-        m += np.maximum(0, surftemp*ddf)
+    if seasonal:
+        m += get_seasonal_melt(t, s, temp_offset=temp_offset)
 
     # add specific melt rate at moulins locations
     if moulins_file is not None:
@@ -273,14 +278,8 @@ def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None,
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # add seasonal melt
-    if temp_offset is not None:
-        temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
-        lr = -0.0075 # 7.5 K km-1 temperature lapse rate
-        ddf = 0.01/86400 # 10 mm K-1 day-1 degree day factor
-        surftemp = [s*lr] + temp[:, None, None]
-        m += np.maximum(0, surftemp*ddf)
-    else:
-        t = np.array([0.0])
+    if seasonal:
+        m += get_seasonal_melt(t, s, temp_offset=temp_offset)
 
     # make melt file
     make_melt_file(filename, x, y, t, m)
