@@ -205,7 +205,6 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
 
     # add seasonal melt
     if temp_offset is not None:
-        xmax = 6000.0
         surf = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
         temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
         lr = -0.0075 # 7.5 K km-1 temperature lapse rate
@@ -229,8 +228,16 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
     make_melt_file(filename, x, y, t, m)
 
 
-def make_melt_file_valley(filename, bgmelt=7.93e-11):
+def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None):
     """Make melt file for valley topography."""
+
+    # time coordinate depend on options
+    day = 24.0 * 60.0 * 60.0
+    year = 365.0 * day
+    if temp_offset is not None:
+        t = np.arange(0.0, year, day)
+    else:
+        t = np.array([0.0])
 
     # prepare coordinates
     xmax = 6000.0
@@ -239,10 +246,21 @@ def make_melt_file_valley(filename, bgmelt=7.93e-11):
     x = np.arange(-dx, xmax + dx + 0.1, dx)
     y = np.arange(-ymax, ymax + 0.1, dy)
     xx, yy = np.meshgrid(x, y)
-    m = np.ones((1, len(y), len(x))) * bgmelt
+    m = np.ones((len(t), len(y), len(x))) * bgmelt
+
+    # add seasonal melt
+    if temp_offset is not None:
+        surf = 1.0 + 100.0*(xx/xmax+(xx+200.0)**0.25-200.0**0.25)
+        temp = -16.0*np.cos(2*np.pi*t/year) - 5.0 + temp_offset
+        lr = -0.0075 # 7.5 K km-1 temperature lapse rate
+        ddf = 0.01/86400 # 10 mm K-1 day-1 degree day factor
+        surftemp = [surf*lr] + temp[:, None, None]
+        m += np.maximum(0, surftemp*ddf)
+    else:
+        t = np.array([0.0])
 
     # make melt file
-    make_melt_file(filename, x, y, 0, m)
+    make_melt_file(filename, x, y, t, m)
 
 
 if __name__ == '__main__':
@@ -260,27 +278,42 @@ if __name__ == '__main__':
     make_boot_file_valley('input/boot_e4.nc', para=-0.5)
     make_boot_file_valley('input/boot_e5.nc', para=-0.7)
 
-    # prepare melt files
+    # prepare melt files for exp. A1 to A6
     make_melt_file_sqrt('input/melt_a1.nc', bgmelt=7.93e-11)
     make_melt_file_sqrt('input/melt_a2.nc', bgmelt=1.59e-09)
     make_melt_file_sqrt('input/melt_a3.nc', bgmelt=5.79e-09)
     make_melt_file_sqrt('input/melt_a4.nc', bgmelt=2.5e-08)
     make_melt_file_sqrt('input/melt_a5.nc', bgmelt=4.5e-08)
     make_melt_file_sqrt('input/melt_a6.nc', bgmelt=5.79e-07)
+
+    # prepare melt files for exp. B1 to B5
     make_melt_file_sqrt('input/melt_b1.nc', moulins_file='moulins_b1.csv')
     make_melt_file_sqrt('input/melt_b2.nc', moulins_file='moulins_b2.csv')
     make_melt_file_sqrt('input/melt_b3.nc', moulins_file='moulins_b3.csv')
     make_melt_file_sqrt('input/melt_b4.nc', moulins_file='moulins_b4.csv')
     make_melt_file_sqrt('input/melt_b5.nc', moulins_file='moulins_b5.csv')
-    make_melt_file_valley('input/melt_e1.nc', bgmelt=1.158e-6)
+
+    # prepare melt files for exp. C1 to C4
     ckwargs = dict(moulins_file='moulins_b5.csv')
     make_melt_file_sqrt('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
     make_melt_file_sqrt('input/melt_c1.nc', moulins_relamp=0.25, **ckwargs)
     make_melt_file_sqrt('input/melt_c2.nc', moulins_relamp=0.5, **ckwargs)
     make_melt_file_sqrt('input/melt_c3.nc', moulins_relamp=1.0, **ckwargs)
     make_melt_file_sqrt('input/melt_c4.nc', moulins_relamp=2.0, **ckwargs)
+
+    # prepare melt files for exp. D1 to D5
     make_melt_file_sqrt('input/melt_d1.nc', temp_offset=-4.0)
     make_melt_file_sqrt('input/melt_d2.nc', temp_offset=-2.0)
     make_melt_file_sqrt('input/melt_d3.nc', temp_offset=0.0)
     make_melt_file_sqrt('input/melt_d4.nc', temp_offset=2.0)
     make_melt_file_sqrt('input/melt_d5.nc', temp_offset=4.0)
+
+    # prepare melt file for exp. E1 to E5
+    make_melt_file_valley('input/melt_e1.nc', bgmelt=1.158e-6)
+
+    # prepare melt files for exp. F1 to F5
+    make_melt_file_valley('input/melt_f1.nc', temp_offset=-6.0)
+    make_melt_file_valley('input/melt_f2.nc', temp_offset=-3.0)
+    make_melt_file_valley('input/melt_f3.nc', temp_offset=0.0)
+    make_melt_file_valley('input/melt_f4.nc', temp_offset=3.0)
+    make_melt_file_valley('input/melt_f5.nc', temp_offset=6.0)
