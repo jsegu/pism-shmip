@@ -26,26 +26,6 @@ def get_time_coord(diurnal=False, seasonal=False):
     return t
 
 
-def get_topos_sqrt():
-    """Get spatial coordinates and surface for square root topography."""
-
-    # prepare spatial coordinates
-    dx = dy = 500.0
-    x = np.arange(-dx, 200e3 + dx + 0.1, dx)
-    y = np.arange(0.0, 20e3 + 0.1, dy)
-    xx, yy = np.meshgrid(x, y)
-    xxsym = 100e3 - np.abs(xx-100e3)
-
-    # prepare topographies
-    s = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
-    s[(xx<0.0)+(200000.0<xx)] = 0.0
-    b = 0.0 * s
-    h = s
-
-    # return coordinates and surface topography
-    return x, y, b, h, s
-
-
 def get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp=0.0):
     """Compute distributed moulins input from pointwise csv file."""
     melt = np.zeros((len(t), len(y), len(x)))
@@ -70,31 +50,52 @@ def get_seasonal_melt(t, s, temp_offset=0.0, lapse_rate=-0.0075,
     return melt
 
 
-def get_topos_valley(para):
-    """Get spatial coordinates and surface for valley topography."""
+def get_topographies(mode='sqrt', para=0.05):
+    """Get spatial coordinates and surface topography."""
 
-    # prepare spatial coordinates
-    xmax = 6000.0
-    ymax = 550.0
-    dx = dy = 20.0
-    x = np.arange(-dx, xmax + dx + 0.1, dx)
-    y = np.arange(-ymax, ymax + 0.1, dy)
-    xx, yy = np.meshgrid(x, y)
+    # square root topography mode
+    if mode == 'sqrt':
 
-    # prepare surface topography
-    s = 1.0 + 100.0*(xx/xmax+(xx+200.0)**0.25-200.0**0.25)
-    smax = s[0, -1]
+        # prepare spatial coordinates
+        xmax = 200e3
+        ymax = 20e3
+        dx = dy = 500.0
+        x = np.arange(-dx, xmax + dx + 0.1, dx)
+        y = np.arange(0.0, ymax + 0.1, dy)
+        xx, yy = np.meshgrid(x, y)
+        xxsym = xmax/2 - np.abs(xx-xmax/2)
 
-    # helper functions
-    f_func = para*xx + (smax-para*xmax) / xmax**2 * xx**2
-    f_benc = 0.05*xx + (smax-0.05*xmax) / xmax**2 * xx**2
-    g_func = 0.5e-6 * abs(yy)**3
-    h_func = (5 - 4.5*xx/xmax) * (s-f_func) / (s-f_benc+1e-12)
+        # prepare topographies
+        s = 1.0 + 6.0 * ((xxsym+5e3)**0.5-5e3**0.5)
+        s[(xx<0.0)+(xmax<xx)] = 0.0
+        b = 0.0 * s
+        h = s
 
-    # basal topography and thickness
-    b = f_func + g_func * h_func
-    h = s - b
-    h[h<0.0] = 0.0
+    # valley topography mode
+    elif mode == 'valley':
+
+        # prepare spatial coordinates
+        xmax = 6000.0
+        ymax = 550.0
+        dx = dy = 20.0
+        x = np.arange(-dx, xmax + dx + 0.1, dx)
+        y = np.arange(-ymax, ymax + 0.1, dy)
+        xx, yy = np.meshgrid(x, y)
+
+        # prepare surface topography
+        s = 1.0 + 100.0*(xx/xmax+(xx+200.0)**0.25-200.0**0.25)
+        smax = s[0, -1]
+
+        # helper functions
+        f_func = para*xx + (smax-para*xmax) / xmax**2 * xx**2
+        f_benc = 0.05*xx + (smax-0.05*xmax) / xmax**2 * xx**2
+        g_func = 0.5e-6 * abs(yy)**3
+        h_func = (5 - 4.5*xx/xmax) * (s-f_func) / (s-f_benc+1e-12)
+
+        # basal topography and thickness
+        b = f_func + g_func * h_func
+        h = s - b
+        h[h<0.0] = 0.0
 
     # return coordinates and surface topography
     return x, y, b, h, s
@@ -206,7 +207,7 @@ def make_boot_file_sqrt(filename):
     """
 
     # get coordinates and topographies
-    x, y, b, h, s = get_topos_sqrt()
+    x, y, b, h, s = get_topographies(mode='sqrt')
 
     # make boot file
     make_boot_file(filename, x, y, b, h)
@@ -216,7 +217,7 @@ def make_boot_file_valley(filename, para=0.05):
     """Make boot file for valley topography."""
 
     # get coordinates and topographies
-    x, y, b, h, s = get_topos_valley(para)
+    x, y, b, h, s = get_topographies(mode='valley', para=para)
 
     # make boot file
     make_boot_file(filename, x, y, b, h)
@@ -257,7 +258,7 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None,
     t = get_time_coord(diurnal=diurnal, seasonal=seasonal)
 
     # prepare coordinates
-    x, y, b, h, s = get_topos_sqrt()
+    x, y, b, h, s = get_topographies(mode='sqrt')
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # add seasonal melt
@@ -281,7 +282,7 @@ def make_melt_file_valley(filename, bgmelt=7.93e-11, temp_offset=None,
     t = get_time_coord(seasonal=seasonal)
 
     # prepare coordinates
-    x, y, b, h, s = get_topos_valley(para)
+    x, y, b, h, s = get_topographies(mode='valley', para=para)
     m = np.ones((len(t), len(y), len(x))) * bgmelt
 
     # add seasonal melt
