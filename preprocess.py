@@ -153,17 +153,17 @@ def make_boot_file_valley(filename, para=0.05):
     make_boot_file(filename, x, y, b, h)
 
 
-def make_melt_file(filename, x, y, m):
+def make_melt_file(filename, x, y, t, m):
     """Make basal melt input file with x and y coords and bmelt variable."""
 
     # init NetCDF file
     print "Preparing boot file %s ..." % filename
-    init_pism_file(filename, x, y, 0)
+    init_pism_file(filename, x, y, t)
     nc = nc4.Dataset(filename, 'a')
 
     # set basal melt rate
     var = nc.createVariable('bmelt', 'f4', ('time', 'y', 'x'))
-    var[0] = m
+    var[:] = m
     var.standard_name = 'land_ice_basal_melt_rate'
     var.long_name = 'basal melt rate'
     var.units = 'm s-1'
@@ -187,7 +187,7 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
     y = np.arange(0.0, 20e3 + 0.1, dy)
     xx, yy = np.meshgrid(x, y)
     xxsym = 100e3 - np.abs(xx-100e3)
-    m = 0.0 * xx + bgmelt
+    m = np.ones((1, len(y), len(x))) * bgmelt
 
     # apply specific melt rate at moulins locations
     if moulins_file:
@@ -196,11 +196,11 @@ def make_melt_file_sqrt(filename, bgmelt=7.93e-11, moulins_file=None):
             jm = np.abs(y - ym).argmin()
             im = np.abs(x - xm).argmin()
             imsym = np.abs(x + xm - 200e3).argmin()
-            m[jm, im] = bgmelt + qm/dx/dy
-            m[jm, imsym] = bgmelt + qm/dx/dy
+            m[:, jm, im] += qm/dx/dy
+            m[:, jm, imsym] += qm/dx/dy
 
     # make melt file
-    make_melt_file(filename, x, y, m)
+    make_melt_file(filename, x, y, 0, m)
 
 
 def make_melt_file_valley(filename, bgmelt=7.93e-11):
@@ -213,10 +213,10 @@ def make_melt_file_valley(filename, bgmelt=7.93e-11):
     x = np.arange(-dx, xmax + dx + 0.1, dx)
     y = np.arange(-ymax, ymax + 0.1, dy)
     xx, yy = np.meshgrid(x, y)
-    m = 0.0 * xx + bgmelt
+    m = np.ones((1, len(y), len(x))) * bgmelt
 
     # make melt file
-    make_melt_file(filename, x, y, m)
+    make_melt_file(filename, x, y, 0, m)
 
 
 if __name__ == '__main__':
