@@ -34,12 +34,14 @@ def get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp=0.0):
     moulins = np.loadtxt(moulins_file, delimiter=',', ndmin=2)
 
     # apply distributed melt rates on nearest grid cells
+    dx = x[1] - x[0]
+    dy = y[1] - y[0]
     for (km, xm, ym, qm) in moulins:
         jm = np.abs(y - ym).argmin()
         im = np.abs(x - xm).argmin()
         imsym = np.abs(x + xm - 200e3).argmin()
         meltseries = qm*(1 - moulins_relamp*np.sin(2*np.pi*t/day))
-        meltseries = np.maximum(0, meltseries)
+        meltseries = np.maximum(0, meltseries)/dx/dy
         melt[:, jm, im] += meltseries
         melt[:, jm, imsym] += meltseries
 
