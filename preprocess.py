@@ -222,7 +222,7 @@ def make_boot_file(filename, mode='sqrt', para=0.05):
     nc.close()
 
 
-def make_melt_file(filename, mode='sqrt', para=0.05, bgmelt=7.93e-11,
+def make_melt_file(filename, mode='sqrt', para=0.05, bgmelt=0.0,
                    moulins_file=None, moulins_relamp=0.0, temp_offset=None):
     """Make basal melt input file with x and y coords and bmelt variable."""
 
@@ -246,11 +246,10 @@ def make_melt_file(filename, mode='sqrt', para=0.05, bgmelt=7.93e-11,
     init_pism_file(filename, x, y, t)
     nc = nc4.Dataset(filename, 'a')
 
-    # set basal melt rate
-    var = nc.createVariable('bmelt', 'f4', ('time', 'y', 'x'))
+    # set time-dependent basal water input
+    var = nc.createVariable('inputtobed', 'f4', ('time', 'y', 'x'))
     var[:] = m
-    var.standard_name = 'land_ice_basal_melt_rate'
-    var.long_name = 'basal melt rate'
+    var.long_name = 'time-dependent basal water input'
     var.units = 'm s-1'
 
     # close NetCDF file
@@ -271,14 +270,6 @@ if __name__ == '__main__':
     make_boot_file('input/boot_e3.nc', mode='valley', para=-0.1)
     make_boot_file('input/boot_e4.nc', mode='valley', para=-0.5)
     make_boot_file('input/boot_e5.nc', mode='valley', para=-0.7)
-
-    # prepare melt files for exp. A1 to A6
-    make_melt_file('input/melt_a1.nc', mode='sqrt', bgmelt=7.93e-11)
-    make_melt_file('input/melt_a2.nc', mode='sqrt', bgmelt=1.59e-09)
-    make_melt_file('input/melt_a3.nc', mode='sqrt', bgmelt=5.79e-09)
-    make_melt_file('input/melt_a4.nc', mode='sqrt', bgmelt=2.5e-08)
-    make_melt_file('input/melt_a5.nc', mode='sqrt', bgmelt=4.5e-08)
-    make_melt_file('input/melt_a6.nc', mode='sqrt', bgmelt=5.79e-07)
 
     # prepare melt files for exp. B1 to B5
     kwa = dict(mode='sqrt')
@@ -302,9 +293,6 @@ if __name__ == '__main__':
     make_melt_file('input/melt_d3.nc', mode='sqrt', temp_offset=0.0)
     make_melt_file('input/melt_d4.nc', mode='sqrt', temp_offset=2.0)
     make_melt_file('input/melt_d5.nc', mode='sqrt', temp_offset=4.0)
-
-    # prepare melt file for exp. E1 to E5
-    make_melt_file('input/melt_e1.nc', mode='valley', bgmelt=1.158e-6)
 
     # prepare melt files for exp. F1 to F5
     make_melt_file('input/melt_f1.nc', mode='valley', temp_offset=-6.0)

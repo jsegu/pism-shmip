@@ -23,10 +23,6 @@ do
             config="$2"
             shift
             ;;
-        -y|--years)
-            years="$2"
-            shift
-            ;;
         *)
             echo "Unknown option $1. Exiting."
             exit 0
@@ -37,24 +33,81 @@ done
 
 # default arguments
 exp=${exp:="a1"}
-years=${years:="5"}
 config=${config:=""}
 
-# Experiment specific settings
+
+# Experiment specific set4tings
 # ----------------------------
 
-if [ "${exp:0:1}" == "e" ]
-then
-    boot_file="input/boot_$exp.nc"
-    melt_file="input/melt_e1.nc"
-    mx=303
-    my=56
-else
-    boot_file="input/boot_sqrt.nc"
-    melt_file="input/melt_$exp.nc"
-    mx=403
-    my=41
-fi
+# boot arguments
+vert_grid="-Mz 2 -Lz 2000"
+case $exp in
+    a*|b*)
+        boot_args="-i input/boot_sqrt.nc -bootstrap -Mx 403 -My 41 $vert_grid"
+        ;;
+    c*)
+        boot_args="-i output/b5.nc"
+        ;;
+    e*)
+        boot_args="-i input/boot_$exp.nc -bootstrap -Mx 303 -My 56 $vert_grid"
+        ;;
+    d*|f*)
+        echo "Sorry, exp. $exp not implemented yet."
+        exit 2
+        ;;
+esac
+
+# basal melt
+case $exp in
+    a1)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 7.93e-11"
+        ;;
+    a2)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 1.59e-9"
+        ;;
+    a3)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 5.79e-9"
+        ;;
+    a4)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 2.5e-8"
+        ;;
+    a5)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 4.5e-8"
+        ;;
+    a6)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 5.79e-7"
+        ;;
+    a6)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 5.79e-7"
+        ;;
+    b*)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 7.93e-11"
+        melt_args+=" -hydrology_input_to_bed_file input/melt_$exp.nc"
+        ;;
+    c*)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 7.93e-11"
+        melt_args+=" -hydrology_input_to_bed_file input/melt_$exp.nc"
+        melt_args+=" -hydrology_input_to_bed_period 0.0027397260273972603"
+        ;;
+    e*)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 1.158e-6"
+        ;;
+esac
+
+
+# run duration and output
+case $exp in
+    a*|b*|e*)
+        years="5"
+        ex_dt=monthly
+        ts_dt=daily
+        ;;
+    c*)
+        years="0.25"
+        ex_dt=hourly
+        ts_dt=hourly
+        ;;
+esac
 
 
 # Output settings
@@ -81,8 +134,8 @@ ncgen $conf_file.cdl -o $conf_file.nc
 # run PISM
 $PISM_DO $PISM_MPIDO $PISM_EXEC \
     -config_override $conf_file.nc -report_mass_accounting \
-    -i $boot_file -bootstrap -hydrology_bmelt_file $melt_file \
-    -Mx $mx -My $my -Mz 2 -Lz 2000 -y $years -o $run.nc -o_size small \
-    -extra_file ${run}_extra.nc -extra_times monthly -extra_vars $extra_vars \
-    -ts_file ${run}_ts.nc -ts_times daily -ts_vars $ts_vars \
+    $boot_args $melt_args \
+    -y $years -o $run.nc -o_size small \
+    -extra_file ${run}_extra.nc -extra_times $ex_dt -extra_vars $extra_vars \
+    -ts_file ${run}_ts.nc -ts_times $ts_dt -ts_vars $ts_vars \
     > $run.log 2> $run.err
