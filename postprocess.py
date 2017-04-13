@@ -70,7 +70,7 @@ def postprocess(exp='a1'):
 
     # create SHMIP node (PISM cell center) coordinate variables
     ovar = ods.createVariable('coords1', x.dtype, ('dim', 'index1'))
-    ovar[:] = np.meshgrid(x, y)
+    ovar[:] = np.meshgrid(y, x)[::-1]
     ovar.long_name = 'node coordinates'
     ovar.pism_name = 'cell center coordinate'
     ovar.units = x.units
@@ -78,7 +78,7 @@ def postprocess(exp='a1'):
     # create SHMIP cell (PISM staggered) coordinate variables
     # (I deduced the sign of x and y shifts by looking at model output)
     ovar = ods.createVariable('coords2', x.dtype, ('dim', 'index2'))
-    ovar[:] = np.meshgrid(x+dx/2, y+dy/2)
+    ovar[:] = np.meshgrid(y+dy/2, x+dx/2)[::-1]
     ovar.long_name = 'cell midpoint coordinates'
     ovar.pism_name = 'staggered grid coordinate'
     ovar.units = x.units
