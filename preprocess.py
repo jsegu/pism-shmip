@@ -16,14 +16,21 @@ def get_time_coord(diurnal=False, seasonal=False):
     if diurnal and seasonal:
         raise ValueError('Can not combine diurnal and seasonal cycles.')
     elif diurnal:
-        t = np.arange(0.0, day, 300.0)
+        t = np.linspace(0.0, day, 289)  # 5-min interval
     elif seasonal:
-        t = np.arange(0.0, year, day)
+        t = np.linspace(0.0, year, 366)  # 1-day interval
     else:
         t = np.array([0.0])
 
-    # return time array
-    return t
+    # build time bounds array
+    if diurnal or seasonal:
+        dt = t[1] - t[0]
+        tb = np.array([t - dt/2, t + dt/2]).T
+    else:
+        tb = None
+
+    # return time and bounds
+    return t, tb
 
 
 def get_moulins_melt(t, x, y, s, moulins_file, moulins_relamp=0.0):
@@ -123,7 +130,7 @@ def get_topographies(mode, para):
     return x, y, b, h, s
 
 
-def init_pism_file(filename, x, y, t):
+def init_pism_file(filename, x, y, t, tb=None):
     """Init basic NetCDF file with x and y coords."""
 
     # open NetCDF file
@@ -142,6 +149,13 @@ def init_pism_file(filename, x, y, t):
     tvar.standard_name = 'time'
     tvar.calendar = '365_day'
     tvar.units = 's'
+
+    # set time bounds
+    if tb is not None:
+        nc.createDimension('nv', 2)
+        nc.variables['time'].bounds = 'time_bounds'
+        tbvar = nc.createVariable('time_bounds', 'f8', ('time', 'nv'))
+        tbvar[:] = tb
 
     # set projection x coordinate
     xvar = nc.createVariable('x', 'f8', ('x',))
@@ -229,7 +243,7 @@ def make_melt_file(filename, mode='sqrt', para=0.05, bgmelt=0.0,
     # get time coordinate depending on options
     diurnal = (moulins_relamp != 0.0)
     seasonal = (temp_offset is not None)
-    t = get_time_coord(diurnal=diurnal, seasonal=seasonal)
+    t, tb = get_time_coord(diurnal=diurnal, seasonal=seasonal)
 
     # get spatial coordinates and topographies
     x, y, b, h, s = get_topographies(mode=mode, para=para)
@@ -243,7 +257,7 @@ def make_melt_file(filename, mode='sqrt', para=0.05, bgmelt=0.0,
 
     # init NetCDF file
     print "Preparing boot file %s ..." % filename
-    init_pism_file(filename, x, y, t)
+    init_pism_file(filename, x, y, t, tb)
     nc = nc4.Dataset(filename, 'a')
 
     # set time-dependent basal water input
