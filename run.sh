@@ -57,6 +57,16 @@ case $exp in
         ;;
 esac
 
+# config overrides
+case $exp in
+    a*|b*|c*|d*)
+        conf_file="config_sqrt${config:+_$config}"
+        ;;
+    e*|f*)
+        conf_file="config_valley${config:+_$config}"
+        ;;
+esac
+
 # basal melt
 case $exp in
     a1)
@@ -113,10 +123,9 @@ esac
 # Output settings
 # ---------------
 
-# run name and config file
+# run name
 mkdir -p output
 run="output/$exp${config:+_$config}"
-conf_file="config${config:+_$config}"
 
 # extra and ts variables
 extra_vars=bwat,bwatvel,bwp,bwprel,effbwp,tauc,wallmelt  # diagnostics

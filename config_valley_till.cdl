@@ -1,0 +1,56 @@
+netcdf config {
+variables:
+    byte pism_overrides ;
+
+        // Turn off ice dynamics
+        pism_overrides:do_mass_conserve = "no" ;
+        pism_overrides:do_energy = "no" ;
+        pism_overrides:stress_balance_model = "ssa" ;
+        pism_overrides:ssa_dirichlet_bc = "yes" ;
+
+        // Physical constants
+        pism_overrides:fresh_water_density = 1000. ;
+        pism_overrides:ice_density = 910. ;
+        pism_overrides:standard_gravity = 9.8 ;
+        pism_overrides:calendar = "365_day" ;
+
+        // Normally not in use
+        pism_overrides:water_latent_heat_fusion = 334000. ;
+        pism_overrides:water_specific_heat_capacity = 4220. ;
+        pism_overrides:beta_CC = 7.5e-08 ;
+
+        // Ice flow
+        pism_overrides:sia_Glen_exponent = 3.0 ;
+        pism_overrides:ssa_Glen_exponent = 3.0 ;
+        pism_overrides:ice_softness = 2.5e-25 ;
+        pism_overrides:hydrology_creep_closure_coefficient = 1.0 ;
+        pism_overrides:hydrology_cavitation_opening_coefficient = 0.5 ;
+        pism_overrides:hydrology_roughness_scale = 0.1 ;
+
+        // Hydrology with till layer
+        pism_overrides:hydrology_model = "distributed" ;
+        pism_overrides:hydrology_tillwat_max = 2.0 ;
+        pism_overrides:hydrology_tillwat_decay_rate = 3.16887646154128e-11 ;
+        pism_overrides:yield_stress_model = "mohr_coulomb" ;
+        pism_overrides:bootstrapping_tillphi_value_no_var = 45. ;
+        pism_overrides:till_cohesion = 0. ;
+
+        // Turbulent flow
+        pism_overrides:hydrology_thickness_power_in_flux = 1.25 ;  // alpha
+        pism_overrides:hydrology_gradient_power_in_flux = 1.5 ;  // beta
+        pism_overrides:hydrology_hydraulic_conductivity = 0.005 ;
+
+        // Regularization etc.
+        pism_overrides:hydrology_regularizing_porosity = 1e-2 ;
+        pism_overrides:hydrology_maximum_time_step_years = 1.0 ;
+        pism_overrides:hydrology_null_strip_width = -1.0 ;
+
+        // Uniform water input
+        pism_overrides:hydrology_use_const_bmelt = "no" ;
+        pism_overrides:hydrology_const_bmelt = 3.168876461e-10 ;
+
+        // Limit time step duration
+        pism_overrides:maximum_time_step_years = 1e-3 ;
+        pism_overrides:ts_force_output_times = "yes" ;
+
+}
