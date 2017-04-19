@@ -16,9 +16,10 @@ def get_time_coord(diurnal=False, seasonal=False):
     if diurnal and seasonal:
         raise ValueError('Can not combine diurnal and seasonal cycles.')
     elif diurnal:
-        t = np.linspace(0.0, day, 289)  # 5-min interval
+        # prepare periodic input as PISM can't do it with daily periods
+        t = np.linspace(5*year, 5*year+30*day, 30*288+1)  # 5-min interval
     elif seasonal:
-        t = np.linspace(0.0, year, 366)  # 1-day interval
+        t = np.linspace(0.0, year, 365+1)  # 1-day interval
     else:
         t = np.array([0.0])
 
@@ -295,7 +296,6 @@ if __name__ == '__main__':
 
     # prepare melt files for exp. C1 to C4
     kwa = dict(mode='sqrt', moulins_file='moulins_b5.csv')
-    make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **kwa)
     make_melt_file('input/melt_c1.nc', moulins_relamp=0.25, **kwa)
     make_melt_file('input/melt_c2.nc', moulins_relamp=0.5, **kwa)
     make_melt_file('input/melt_c3.nc', moulins_relamp=1.0, **kwa)

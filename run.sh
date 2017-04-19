@@ -87,13 +87,13 @@ case $exp in
     c*)
         melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 7.93e-11"
         melt_args+=" -hydrology_input_to_bed_file input/melt_$exp.nc"
-        melt_args+=" -hydrology_input_to_bed_period 0.0027397260273972603"
+        # PISM does not support non-integer periods, e.g. 1/365 (issue #380).
+        #melt_args+=" -hydrology_input_to_bed_period 0.0027397260273972603"
         ;;
     e*)
         melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 1.158e-6"
         ;;
 esac
-
 
 # run duration and output
 case $exp in
@@ -103,7 +103,7 @@ case $exp in
         ts_dt=daily
         ;;
     c*)
-        years="0.25"
+        years="0.082191781"  # 30 days
         ex_dt=hourly
         ts_dt=hourly
         ;;
