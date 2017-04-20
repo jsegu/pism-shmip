@@ -12,9 +12,12 @@ import tarfile
 auth = 'jseg'
 inst = 'ETH Zürich'
 name = 'Julien Seguinot'
-exps = (['a%d' % i for i in range(1, 5)] +
+exps = (['a%d' % i for i in range(1, 7)] +
         ['b%d' % i for i in range(1, 6)] +
-        ['e%d' % i for i in range(1, 5)])
+        ['c%d' % i for i in range(1, 5)] +
+        ['d%d' % i for i in range(1, 6)] +
+        ['e%d' % i for i in range(1, 5)] +
+        ['f%d' % i for i in range(1, 6)])
 
 
 def copy_attributes(ivar, ovar):
@@ -27,17 +30,27 @@ def copy_attributes(ivar, ovar):
 def postprocess(exp='a1'):
     """Convert PISM output to SHMIP conventions."""
 
-    print "Postprocessing experiment %s..." % exp.upper()
-
     # boot filename
     if exp[0] == 'e':
         bfilename = 'input/boot_%s.nc' % exp
+    elif exp[0] == 'f':
+        bfilename = 'input/boot_e1.nc'
     else:
         bfilename = 'input/boot_sqrt.nc'
 
     # extra and output filenames
     efilename = 'output/%s_extra.nc' % exp
     ofilename = 'processed/%s_%s.nc' % (exp.upper(), auth)
+
+    # check for file presence
+    if not os.path.isfile(bfilename):
+        print "Warning: could not find input for exp %s." % exp.upper()
+        return
+    elif not os.path.isfile(efilename):
+        print "Warning: could not find output for exp %s." % exp.upper()
+        return
+    else:
+        print "Postprocessing experiment %s..." % exp.upper()
 
     # open datasets
     bds = nc4.Dataset(bfilename, 'r')
@@ -148,7 +161,9 @@ if __name__ == '__main__':
     print "Preparing archive %s..." % tarname
     with tarfile.open(tarname, "w:gz") as tar:
         for exp in exps:
-            tar.add('processed/%s_%s.nc' % (exp.upper(), auth))
+            ofilename = 'processed/%s_%s.nc' % (exp.upper(), auth)
+            if os.path.isfile(ofilename):
+                tar.add(ofilename)
 
     # copy questionnaire
     shutil.copyfile('questions.rst', 'processed/questions.rst')

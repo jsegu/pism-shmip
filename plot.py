@@ -14,7 +14,7 @@ def plot_final(exp='a1'):
     """Plot y-min, y-max and y-avg final effective pressure and flux."""
 
     # experiment specific settins
-    if exp[0] == 'e':
+    if exp[0] in ('e', 'f'):
         xmax = 6.0
     else:
         xmax = 100.0
@@ -91,7 +91,7 @@ def plot_transient(exp='a1'):
     """Plot time evolution of y-averaged effective pressure."""
 
     # experiment specific settins
-    if exp[0] == 'e':
+    if exp[0] in ('e', 'f'):
         xmax = 6.0
     else:
         xmax = 100.0
