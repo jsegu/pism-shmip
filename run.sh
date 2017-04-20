@@ -54,9 +54,11 @@ case $exp in
     e*)
         boot_args="-i input/boot_$exp.nc -bootstrap -Mx 303 -My 56 $vert_grid"
         ;;
+    f0)
+        boot_args="-i input/boot_e1.nc -bootstrap -Mx 303 -My 56 $vert_grid"
+        ;;
     f*)
-        echo "Sorry, exp. $exp not implemented yet."
-        exit 2
+        boot_args="-i output/f0.nc"
         ;;
 esac
 
@@ -111,11 +113,19 @@ case $exp in
     e*)
         melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 1.158e-6"
         ;;
+    f0)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 7.93e-11"
+        ;;
+    f*)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 7.93e-11"
+        melt_args+=" -hydrology_input_to_bed_file input/melt_$exp.nc"
+        melt_args+=" -hydrology_input_to_bed_period 1"
+        ;;
 esac
 
 # run duration and output
 case $exp in
-    a*|b*|e*)
+    a*|b*|e*|f0)
         years="5"
         ex_dt=monthly
         ts_dt=daily
@@ -125,7 +135,7 @@ case $exp in
         ex_dt=hourly
         ts_dt=hourly
         ;;
-    d*)
+    d*|f*)
         years="5"
         ex_dt=daily
         ts_dt=daily
