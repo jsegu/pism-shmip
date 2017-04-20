@@ -48,10 +48,13 @@ case $exp in
     c*)
         boot_args="-i output/b5.nc"
         ;;
+    d*)
+        boot_args="-i output/a1.nc"
+        ;;
     e*)
         boot_args="-i input/boot_$exp.nc -bootstrap -Mx 303 -My 56 $vert_grid"
         ;;
-    d*|f*)
+    f*)
         echo "Sorry, exp. $exp not implemented yet."
         exit 2
         ;;
@@ -100,6 +103,11 @@ case $exp in
         # PISM does not support non-integer periods, e.g. 1/365 (issue #380).
         #melt_args+=" -hydrology_input_to_bed_period 0.0027397260273972603"
         ;;
+    d*)
+        melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 7.93e-11"
+        melt_args+=" -hydrology_input_to_bed_file input/melt_$exp.nc"
+        melt_args+=" -hydrology_input_to_bed_period 1"
+        ;;
     e*)
         melt_args="-hydrology_use_const_bmelt -hydrology_const_bmelt 1.158e-6"
         ;;
@@ -116,6 +124,11 @@ case $exp in
         years="0.082191781"  # 30 days
         ex_dt=hourly
         ts_dt=hourly
+        ;;
+    d*)
+        years="5"
+        ex_dt=daily
+        ts_dt=daily
         ;;
 esac
 
