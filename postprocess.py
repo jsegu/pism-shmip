@@ -97,7 +97,9 @@ def postprocess(exp='a1'):
     ods.dimension = '2D'
     ods.channels_on_edges = 'no'
     ods.institution = '%s, %s' % (name, inst)
-    ods.references = 'http://pism-docs.org, http://shmip.bitbucket.io'
+    ods.references = ('http://pism-docs.org, '
+                      'https://shmip.bitbucket.io, '
+                      'https://github.com/jsegu/pism-shmip')
 
     # create dimensions
     ods.createDimension('dim', 2)  # number of spatial dimensions
