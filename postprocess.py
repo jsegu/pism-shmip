@@ -16,8 +16,13 @@ exps = (['a%d' % i for i in range(1, 7)] +
         ['b%d' % i for i in range(1, 6)] +
         ['c%d' % i for i in range(1, 5)] +
         ['d%d' % i for i in range(1, 6)] +
-        ['e%d' % i for i in range(1, 5)] +
+        ['e%d' % i for i in range(1, 6)] +
         ['f%d' % i for i in range(1, 6)])
+
+
+# day and year in seconds
+day = 24.0 * 60.0 * 60.0
+year = 365.0 * day
 
 
 def copy_attributes(ivar, ovar):
@@ -67,6 +72,25 @@ def postprocess(exp='a1'):
     dx = x[1] - x[0]
     dy = y[1] - y[0]
 
+    # prepare slicing on x coordinate
+    if exp[0] in ('a', 'b', 'c', 'd'):
+        xcond = (0e3 <= x[:]) * (x[:] <= 100e3)
+    else:
+        xcond = (0e3 <= x[:]) * (x[:] <= 6e3)
+
+    # prepare slicing on time coordinate
+    if exp[0] in ('c'):
+        tcond = (t[:] >= t[-1] - day)
+    elif exp[0] in ('d', 'f'):
+        tcond = (t[:] >= t[-1] - year)
+    else:
+        tcond = (t[:] >= 0.0)
+
+    # prepare sliced coordinates
+    ys = y[:]
+    xs = x[xcond]
+    ts = t[tcond]
+
     # set additional global attributes
     ods.title = 'PISM experiment %s.' % exp.upper()
     ods.meshtype = 'structured'
@@ -77,13 +101,13 @@ def postprocess(exp='a1'):
 
     # create dimensions
     ods.createDimension('dim', 2)  # number of spatial dimensions
-    ods.createDimension('index1', len(x)*len(y))  # regular grid
-    ods.createDimension('index2', len(x)*len(y))  # staggered grid
+    ods.createDimension('index1', len(xs)*len(ys))  # regular grid
+    ods.createDimension('index2', len(xs)*len(ys))  # staggered grid
     ods.createDimension('time', None)
 
     # create SHMIP node (PISM cell center) coordinate variables
     ovar = ods.createVariable('coords1', x.dtype, ('dim', 'index1'))
-    ovar[:] = np.meshgrid(y, x)[::-1]
+    ovar[:] = np.meshgrid(ys, xs)[::-1]
     ovar.long_name = 'node coordinates'
     ovar.pism_name = 'cell center coordinate'
     ovar.units = x.units
@@ -91,7 +115,7 @@ def postprocess(exp='a1'):
     # create SHMIP cell (PISM staggered) coordinate variables
     # (I deduced the sign of x and y shifts by looking at model output)
     ovar = ods.createVariable('coords2', x.dtype, ('dim', 'index2'))
-    ovar[:] = np.meshgrid(y+dy/2, x+dx/2)[::-1]
+    ovar[:] = np.meshgrid(ys+dy/2, xs+dx/2)[::-1]
     ovar.long_name = 'cell midpoint coordinates'
     ovar.pism_name = 'staggered grid coordinate'
     ovar.units = x.units
@@ -99,41 +123,41 @@ def postprocess(exp='a1'):
     # copy time coordinate
     ovar = ods.createVariable('time', t.dtype, ('time'))
     copy_attributes(t, ovar)
-    ovar[:] = t[:]
+    ovar[:] = ts[:]
     ovar.long_name = 'time'
     ovar.units = 's'
 
     # copy boot bedrock topography
     bvar = bds.variables['topg']
     ovar = ods.createVariable('B', bvar.dtype, ('index1'))
-    ovar[:] = bvar[:]
+    ovar[:] = bvar[:, :, xcond]
     copy_attributes(bvar, ovar)
     ovar.long_name = 'bed elevation'
 
     # copy boot ice thickness
     bvar = bds.variables['thk']
     ovar = ods.createVariable('H', bvar.dtype, ('index1'))
-    ovar[:] = bvar[:]
+    ovar[:] = bvar[:, :, xcond]
     copy_attributes(bvar, ovar)
     ovar.long_name = 'ice thickness'
 
     # copy effective pressure
     evar = eds.variables['effbwp']
     ovar = ods.createVariable('N', evar.dtype, ('time', 'index1'))
-    ovar[:] = evar[:]
+    ovar[:] = evar[tcond, xcond]
     copy_attributes(evar, ovar)
     ovar.long_name = 'effective pressure'
 
     # copy water sheet thickness
     evar = eds.variables['bwat']
     ovar = ods.createVariable('h', evar.dtype, ('time', 'index1'))
-    ovar[:] = evar[:]
+    ovar[:] = evar[tcond, xcond]
     copy_attributes(evar, ovar)
     ovar.long_name = 'water sheet thickness'
 
     # compute water sheet discharge
-    u = eds.variables['bwatvel[0]'][:]
-    v = eds.variables['bwatvel[1]'][:]
+    u = eds.variables['bwatvel[0]'][tcond, xcond]
+    v = eds.variables['bwatvel[1]'][tcond, xcond]
     ovar = ods.createVariable('q', evar.dtype, ('time', 'index2'))
     ovar[:] = (u**2+v**2)**0.5/(365.0*24*60*60)
     ovar.long_name = 'water sheet discharge'
