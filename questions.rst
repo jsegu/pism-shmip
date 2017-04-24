@@ -113,13 +113,13 @@ Suite C
     No.
 
 - *CPU time used for the run.*
-    - C1 0.40 h (x8 procs)
-    - C2 0.40 h
-    - C3 0.40 h
-    - C4 0.39 h
+    - C1 0.98 h (x8 procs)
+    - C2 1.00 h
+    - C3 0.99 h
+    - C4 0.98 h
 
 - *How confident are you of model convergence?*
-    Very confident for C1 to C3; faily confident for C4. [fixme]
+    Very confident for C1 to C3; quite confident for C4.
 
 
 Suite D
@@ -158,14 +158,14 @@ Suite E
     increased englacial void fraction for valley runs.
 
 - *CPU time used for the run.*
-    - E1 12.24 h (x8 procs)
-    - E2 [fixme]
-    - E3 41.63 h
-    - E4 [fixme]
-    - E5 [fixme]
+    - E1  12.24 h (x8 procs)
+    - E2 109.89 h
+    - E3  41.63 h
+    - E4  52.98 h
+    - E5  46.89 h
 
 - *How confident are you of model convergence?*
-    [fixme]
+    Very confident for all runs.
 
 
 Suite D

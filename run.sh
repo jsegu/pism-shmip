@@ -131,7 +131,7 @@ case $exp in
         ts_dt=daily
         ;;
     c*)
-        years="0.082191781"  # 30 days
+        years="0.2"  # 73 days
         ex_dt=hourly
         ts_dt=hourly
         ;;

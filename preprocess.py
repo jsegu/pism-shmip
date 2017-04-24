@@ -17,7 +17,7 @@ def get_time_coord(diurnal=False, seasonal=False):
         raise ValueError('Can not combine diurnal and seasonal cycles.')
     elif diurnal:
         # prepare periodic input as PISM can't do it with daily periods
-        t = np.linspace(5*year, 5*year+30*day, 30*288+1)  # 5-min interval
+        t = np.linspace(5*year, 5*year+73*day, 73*288+1)  # 5-min interval
     elif seasonal:
         t = np.linspace(0.0, year, 365+1)  # 1-day interval
     else:
