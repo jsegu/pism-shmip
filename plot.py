@@ -11,6 +11,23 @@ plt.rc('mathtext', default='regular')
 plt.rc('image', cmap='viridis')
 
 
+def _envelope(x, z, ax=None, c=None, ls=None, axis=0):
+    """Plot average and min to max envelope along given axis."""
+
+    # get current axes if none
+    ax = ax or plt.gca()
+
+    # compute min, max and average profiles
+    zmin = z.min(axis=axis)
+    zmax = z.max(axis=axis)
+    zavg = z.mean(axis=axis)
+
+    # plot average and envelope
+    l, = ax.plot(x, zavg, c=c, ls=ls)
+    c = l.get_color()
+    ax.fill_between(x, zmin, zmax, edgecolor='none', facecolor=c, alpha=0.25)
+
+
 def plot_final(exp='a1'):
     """Plot y-min, y-max and y-avg final effective pressure and flux."""
 
@@ -23,6 +40,15 @@ def plot_final(exp='a1'):
     # open extra file
     print "Plotting experiment %s final stage..." % exp
     nc = nc4.Dataset('output/%s_extra.nc' % exp)
+
+    # read config
+    config = nc.variables['pism_config']
+    g = config.standard_gravity
+    c0 = config.till_cohesion
+    phi = config.bootstrapping_tillphi_value_no_var
+    rhoi = config.ice_density
+
+    # read variables
     x = nc.variables['x'][:]*1e-3
     p = nc.variables['effbwp'][-1, :, :]*1e-6
     u = nc.variables['bwatvel[0]'][-1, :, :]
@@ -30,42 +56,39 @@ def plot_final(exp='a1'):
     w = nc.variables['bwat'][-1, :, :]
     t = nc.variables['time'][-1]/(365.0*24*60*60)
     q = w*(u**2+v**2)**0.5/(365.0*24*60*60)*1e3
-    config = nc.variables['pism_config']
+
+    # read till effective pressure
     if config.yield_stress_model == 'mohr_coulomb':
-        phi = config.bootstrapping_tillphi_value_no_var
-        c_0 = config.till_cohesion
-        n = nc.variables['tauc'][-1, :, :]*1e-6/np.tan(phi) - c_0
+        n = nc.variables['tauc'][-1, :, :]*1e-6/np.tan(phi) - c0
     else:
         n = p * np.nan
     nc.close()
 
-    # compute min, max and mean
-    pmin = p.min(axis=1)
-    pmax = p.max(axis=1)
-    pavg = p.mean(axis=1)
-    nmin = n.min(axis=1)
-    nmax = n.max(axis=1)
-    navg = n.mean(axis=1)
-    qmin = q.min(axis=1)
-    qmax = q.max(axis=1)
-    qavg = q.mean(axis=1)
+    # read overburden pressure from boot file
+    if exp[0] == 'e':
+        bfilename = 'input/boot_%s.nc' % exp[:2]
+    elif exp[0] == 'f':
+        bfilename = 'input/boot_e1.nc'
+    else:
+        bfilename = 'input/boot_sqrt.nc'
+    nc = nc4.Dataset(bfilename)
+    h = rhoi*g*nc.variables['thk'][0]*1e-6
+    nc.close()
 
     # init figure
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
 
     # plot effective pressure
     ax1.set_title('Experiment %s, %.1f$\,a$' % (exp.upper(), t))
-    ax1.fill_between(x, pmin, pmax, edgecolor='none', alpha=0.25)
-    ax1.plot(x, pavg)
-    ax1.fill_between(x, nmin, nmax, edgecolor='none', alpha=0.25)
-    ax1.plot(x, navg, '--')
+    _envelope(x, h, ax=ax1, c='0.5')
+    _envelope(x, p, ax=ax1, axis=1)
+    _envelope(x, n, ax=ax1, ls='--', axis=1)
     ax1.set_ylim(0.0, ax1.get_ylim()[1])
     ax1.set_ylabel('Effective pressure (MPa)')
     ax1.grid()
 
     # plot water velocity
-    ax2.fill_between(x, qmin, qmax, edgecolor='none', alpha=0.25)
-    ax2.plot(x, qavg)
+    _envelope(x, q, ax=ax2, axis=1)
     ax2.set_xlim(0.0, xmax)
     ax2.set_ylim(0.0, ax2.get_ylim()[1])
     ax2.set_xlabel('Distance from ice margin (km)')
