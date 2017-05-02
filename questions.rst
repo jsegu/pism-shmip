@@ -40,9 +40,8 @@ Whole inter-comparison
 
 - *Other remarks*
     In PISM, subglacial hydrology can be coupled to ice dynamics via a layer of
-    porous, compressible till. These experiments were conducted without a till
-    layer, but in the future I would like to submit a second set of experiments
-    including a till layer.
+    porous, compressible till. A first set of experiments was conducted without
+    a till layer, and a second set with a till layer.
 
 
 Model tuning
@@ -78,6 +77,12 @@ Suite A
     - A4 0.80 h
     - A5 1.30 h
     - A6 8.71 h
+    - A1_TILL  0.37 h
+    - A2_TILL  0.36 h
+    - A3_TILL  0.36 h
+    - A4_TILL  0.48 h
+    - A5_TILL  0.96 h
+    - A6_TILL 24.19 h
 
 - *How confident are you of model convergence?*
     Very confident for all runs.
@@ -98,6 +103,11 @@ Suite B
     - B3  9.05 h
     - B4  8.52 h
     - B5  2.15 h
+    - B1_TILL 13.32 h
+    - B2_TILL 11.55 h
+    - B3_TILL  8.92 h
+    - B4_TILL  8.22 h
+    - B5_TILL  1.38 h
 
 - *How confident are you of model convergence?*
     Very confident for all runs.
@@ -117,6 +127,10 @@ Suite C
     - C2 1.00 h
     - C3 0.99 h
     - C4 0.98 h
+    - C1_TILL 0.97 h
+    - C2_TILL 0.97 h
+    - C3_TILL 0.97 h
+    - C4_TILL 0.99 h
 
 - *How confident are you of model convergence?*
     Very confident for C1 to C3; quite confident for C4.
@@ -137,6 +151,12 @@ Suite D
     - D3 4.69 h
     - D4 6.44 h
     - D5 8.38 h
+    - D1_TILL 1.69 h
+    - D2_TILL 2.87 h
+    - D3_TILL 4.35 h
+    - D4_TILL 6.06 h
+    - D5_TILL 8.18 h
+
 
 - *How confident are you of model convergence?*
     Very confident for all runs.
@@ -163,6 +183,12 @@ Suite E
     - E3  41.63 h
     - E4  52.98 h
     - E5  46.89 h
+    - E1_TILL 10.78 h
+    - E2_TILL 19.40 h
+    - E3_TILL 34.04 h
+    - E4_TILL 54.90 h
+    - E5_TILL 46.70 h
+
 
 - *How confident are you of model convergence?*
     Very confident for all runs.
@@ -184,6 +210,12 @@ Suite D
     - F3 3.45 h
     - F4 5.02 h
     - F5 6.61 h
+    - F0_TILL 0.14 h
+    - F1_TILL 0.79 h
+    - F2_TILL 1.86 h
+    - F3_TILL 3.29 h
+    - F4_TILL 4.75 h
+    - F5_TILL 6.44 h
 
 - *How confident are you of model convergence?*
     Very confident for all runs.

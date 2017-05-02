@@ -18,6 +18,7 @@ exps = (['a%d' % i for i in range(1, 7)] +
         ['d%d' % i for i in range(1, 6)] +
         ['e%d' % i for i in range(1, 6)] +
         ['f%d' % i for i in range(1, 6)])
+exps += [e + '_till' for e in exps]
 
 
 # day and year in seconds
@@ -37,7 +38,7 @@ def postprocess(exp='a1'):
 
     # boot filename
     if exp[0] == 'e':
-        bfilename = 'input/boot_%s.nc' % exp
+        bfilename = 'input/boot_%s.nc' % exp[:2]
     elif exp[0] == 'f':
         bfilename = 'input/boot_e1.nc'
     else:
@@ -45,7 +46,7 @@ def postprocess(exp='a1'):
 
     # extra and output filenames
     efilename = 'output/%s_extra.nc' % exp
-    ofilename = 'processed/%s_%s.nc' % (exp.upper(), auth)
+    ofilename = 'processed/%s_%s.nc' % (exp[:2].upper() + exp[2:], auth)
 
     # check for file presence
     if not os.path.isfile(bfilename):

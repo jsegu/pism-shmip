@@ -2,6 +2,7 @@
 
 import os
 import argparse
+import numpy as np
 import matplotlib.pyplot as plt
 import netCDF4 as nc4
 
@@ -29,12 +30,22 @@ def plot_final(exp='a1'):
     w = nc.variables['bwat'][-1, :, :]
     t = nc.variables['time'][-1]/(365.0*24*60*60)
     q = w*(u**2+v**2)**0.5/(365.0*24*60*60)*1e3
+    config = nc.variables['pism_config']
+    if config.yield_stress_model == 'mohr_coulomb':
+        phi = config.bootstrapping_tillphi_value_no_var
+        c_0 = config.till_cohesion
+        n = nc.variables['tauc'][-1, :, :]*1e-6/np.tan(phi) - c_0
+    else:
+        n = p * np.nan
     nc.close()
 
     # compute min, max and mean
     pmin = p.min(axis=1)
     pmax = p.max(axis=1)
     pavg = p.mean(axis=1)
+    nmin = n.min(axis=1)
+    nmax = n.max(axis=1)
+    navg = n.mean(axis=1)
     qmin = q.min(axis=1)
     qmax = q.max(axis=1)
     qavg = q.mean(axis=1)
@@ -46,6 +57,8 @@ def plot_final(exp='a1'):
     ax1.set_title('Experiment %s, %.1f$\,a$' % (exp.upper(), t))
     ax1.fill_between(x, pmin, pmax, edgecolor='none', alpha=0.25)
     ax1.plot(x, pavg)
+    ax1.fill_between(x, nmin, nmax, edgecolor='none', alpha=0.25)
+    ax1.plot(x, navg, '--')
     ax1.set_ylim(0.0, ax1.get_ylim()[1])
     ax1.set_ylabel('Effective pressure (MPa)')
     ax1.grid()
