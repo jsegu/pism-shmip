@@ -151,8 +151,8 @@ mkdir -p output
 run="output/$exp${config:+_$config}"
 
 # extra and ts variables
-extra_vars=bwat,bwatvel,bwp,bwprel,effbwp,tauc,wallmelt  # diagnostics
-#extra_vars+=,hydrobmelt,hydroinput,hydrovelbase_mag  # verification
+extra_vars=bwat,bwatvel,bwp,bwprel,effbwp,tauc,tillwat,wallmelt  # diagnostics
+extra_vars+=,hydrobmelt,hydroinput,hydrovelbase_mag  # verification
 ts_vars=hydro_ice_free_land_loss,hydro_ice_free_land_loss_cumulative,
 ts_vars+=hydro_negative_thickness_gain,hydro_negative_thickness_gain_cumulative
 
