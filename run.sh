@@ -46,10 +46,10 @@ case $exp in
         boot_args="-i input/boot_sqrt.nc -bootstrap -Mx 403 -My 41 $vert_grid"
         ;;
     c*)
-        boot_args="-i output/b5.nc"
+        boot_args="-i output/b5${config:+_$config}.nc"
         ;;
     d*)
-        boot_args="-i output/a1.nc"
+        boot_args="-i output/a1${config:+_$config}.nc"
         ;;
     e*)
         boot_args="-i input/boot_$exp.nc -bootstrap -Mx 303 -My 56 $vert_grid"
@@ -58,7 +58,7 @@ case $exp in
         boot_args="-i input/boot_e1.nc -bootstrap -Mx 303 -My 56 $vert_grid"
         ;;
     f*)
-        boot_args="-i output/f0.nc"
+        boot_args="-i output/f0${config:+_$config}.nc"
         ;;
 esac
 
