@@ -18,7 +18,6 @@ exps = (['a%d' % i for i in range(1, 7)] +
         ['d%d' % i for i in range(1, 6)] +
         ['e%d' % i for i in range(1, 6)] +
         ['f%d' % i for i in range(1, 6)])
-exps += [e + '_till' for e in exps]
 
 
 # day and year in seconds
