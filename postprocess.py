@@ -132,14 +132,14 @@ def postprocess(exp='a1'):
     # copy boot bedrock topography
     bvar = bds.variables['topg']
     ovar = ods.createVariable('B', bvar.dtype, ('index1'))
-    ovar[:] = bvar[:, :, xcond]
+    ovar[:] = bvar[:, :, xcond].T.flatten()
     copy_attributes(bvar, ovar)
     ovar.long_name = 'bed elevation'
 
     # copy boot ice thickness
     bvar = bds.variables['thk']
     ovar = ods.createVariable('H', bvar.dtype, ('index1'))
-    ovar[:] = bvar[:, :, xcond]
+    ovar[:] = bvar[:, :, xcond].T.flatten()
     copy_attributes(bvar, ovar)
     ovar.long_name = 'ice thickness'
 
