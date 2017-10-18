@@ -158,10 +158,11 @@ def postprocess(exp='a1'):
     ovar.long_name = 'water sheet thickness'
 
     # compute water sheet discharge
+    h = eds.variables['bwat'][tcond, xcond]
     u = eds.variables['bwatvel[0]'][tcond, xcond]
     v = eds.variables['bwatvel[1]'][tcond, xcond]
     ovar = ods.createVariable('q', evar.dtype, ('time', 'index2'))
-    ovar[:] = (u**2+v**2)**0.5/(365.0*24*60*60)
+    ovar[:] = h*(u**2+v**2)**0.5/(365.0*24*60*60)
     ovar.long_name = 'water sheet discharge'
     ovar.units = 'm^2/s'
 
